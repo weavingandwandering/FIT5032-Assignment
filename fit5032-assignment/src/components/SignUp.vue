@@ -178,7 +178,7 @@
 
 
      const saveUser = (username, password, email, role) => {
-      const users = JSON.parse(localStorage.getItem('users')) || [];
+      const users = JSON.parse(localSotorage.getItem('users')) || [];
       console.log(users);
       const findUser = users.find(user => user.username === username);
       const userEmail = users.find(user => user.email === email && user.password !== password);
