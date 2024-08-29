@@ -1,29 +1,29 @@
 <template>
-    <!-- Using Bootstrap's Header template (starter code) -->
-    <!-- https://getbootstrap.com/docs/5.0/examples/headers/ -->
-    <div class="container">
-      <header class="d-flex justify-content-between py-3">
-        <ul class="nav nav-pills">
-          <li class="nav-item">
-            <router-link to="/" class="nav-link" active-class="active" aria-current="page">Home (Week 5)</router-link>
-          </li>
-          <li class="nav-item">
-            <router-link to="/about" class="nav-link" active-class="active">About</router-link>
-          </li>
-        </ul>
-        <ul class="nav nav-pills">
-          <li class="nav-item" v-if="currentUser === null">
-            <router-link to="/login" class="nav-link" active-class="active">Login</router-link>
-          </li>
-          <li class="nav-item" v-else>
-            <p class="nav-link text-end text-success  mb-0">Logged in as</p>
-            <h6 class="nav-link text-dark fw-bold mb-0">{{currentUser }}</h6>
-            <button variant="outline-success" type="button" @click="logout">Log Out</button>
-          </li>
-        </ul>
-      </header>
-    </div>
-  </template>
+  <div class="container">
+    <header class="d-flex justify-content-between py-3">
+      <ul class="nav nav-pills">
+        <li class="nav-item">
+          <router-link to="/" class="nav-link" active-class="active" aria-current="page">Home (Week 5)</router-link>
+        </li>
+        <li class="nav-item">
+          <router-link to="/about" class="nav-link" active-class="active">About</router-link>
+        </li>
+        <li class="nav-item" v-if="currentUser === null">
+          <router-link to="/login" class="nav-link" active-class="active">Login</router-link>
+        </li>
+        <li class="nav-item d-flex align-items-center" v-else>
+          <router-link to="/forum" class="nav-link" active-class="active">Forum</router-link>
+          <div class="d-flex flex-column align-items-end">
+            <p class="mb-0 text-success">Logged in as</p>
+            <h6 class="mb-0 fw-bold text-dark">{{ currentUser }}</h6>
+          </div>
+          <button class="btn btn-outline-success ms-3" @click="logout">Log Out</button>
+        </li>
+      </ul>
+    </header>
+  </div>
+</template>
+
 
 <script>
 import { ref, watch } from 'vue';

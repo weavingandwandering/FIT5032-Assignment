@@ -1,5 +1,4 @@
 <script setup>
-import HomeView from './components/HomeView.vue';
 import Header from './components/Header.vue'
 </script>
 
