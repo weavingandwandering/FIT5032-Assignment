@@ -70,7 +70,7 @@
   
   <script setup>
 
-    import { ref, vModelRadio } from 'vue';
+    import { ref } from 'vue';
     import { useRouter } from 'vue-router'
 
     const formData = ref({
@@ -78,13 +78,8 @@
         password: '',
     });
 
-    const validData = ref({
-        username: "FIT5032",
-        password: "student@5032"
-    });
 
-    
-
+  
 
     const router = useRouter()
 

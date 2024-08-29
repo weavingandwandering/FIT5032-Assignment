@@ -44,11 +44,6 @@
         password: '',
     });
 
-    const validData = ref({
-        username: "FIT5032",
-        password: "student@5032"
-    });
-
 
     const router = useRouter()
 
@@ -57,14 +52,11 @@
         error: null
     })
     const signForm = () => {
-        authenticateUser()
         router.push('./signup')
-
-       
     };
 
     const submitForm = () => {
-        authenticateUser()
+        authenticateUser(formData.value.username, formData.value.password);
         if(isAuthenticated.value.result === true){
             router.push("/about")
         } else{
@@ -77,14 +69,22 @@
     const isAuthenticated = ref({result: false});
  
 
-    const authenticateUser = () => {
-        if(validData.value.username === formData.value.username && validData.value.password === formData.value.password){
-            isAuthenticated.value.result = true;
-        } else {
-            isAuthenticated.value.result = false;
-                }
-    };
+   
+    const authenticateUser = (username, password) => {
+      const users = JSON.parse(localStorage.getItem('users'));
+      console.log("Users", users);
+      const findUser = users.find(user => user.username === username && user.password === password);
 
+      if(findUser){
+        isAuthenticated.value.result = true;
+        localStorage.setItem('currentUser', username);
+        console.log("current user", localStorage.getItem('currentUser'));
+      } else{
+        isAuthenticated.value.result = false;
+        
+      }
+
+    }
     
   // No script needed for now
   </script>

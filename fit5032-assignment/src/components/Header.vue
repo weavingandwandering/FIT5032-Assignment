@@ -2,23 +2,57 @@
     <!-- Using Bootstrap's Header template (starter code) -->
     <!-- https://getbootstrap.com/docs/5.0/examples/headers/ -->
     <div class="container">
-      <header class="d-flex justify-content-center py-3">
+      <header class="d-flex justify-content-between py-3">
         <ul class="nav nav-pills">
           <li class="nav-item">
-            <router-link to="/" class="nav-link" active-class="active" aria-current="page"
-              >Home (Week 5)</router-link
-            >
+            <router-link to="/" class="nav-link" active-class="active" aria-current="page">Home (Week 5)</router-link>
           </li>
           <li class="nav-item">
             <router-link to="/about" class="nav-link" active-class="active">About</router-link>
           </li>
-          <li class="nav-item">
+        </ul>
+        <ul class="nav nav-pills">
+          <li class="nav-item" v-if="currentUser === null">
             <router-link to="/login" class="nav-link" active-class="active">Login</router-link>
+          </li>
+          <li class="nav-item" v-else>
+            <p class="nav-link text-end text-success  mb-0">Logged in as</p>
+            <h6 class="nav-link text-dark fw-bold mb-0">{{currentUser }}</h6>
+            <button variant="outline-success" type="button" @click="logout">Log Out</button>
           </li>
         </ul>
       </header>
     </div>
   </template>
+
+<script>
+import { ref, watch } from 'vue';
+
+export default {
+  setup() {
+    const currentUser = ref(localStorage.getItem('currentUser'));
+    console.log("Current User", currentUser);
+
+    // Watch for changes in localStorage or if the user data changes
+    watch(
+      () => localStorage.getItem('currentUser'),
+      (newVal) => {
+        currentUser.value = newVal;
+      }
+    );
+
+    const logout = () => {
+      localStorage.removeItem('currentUser');
+      currentUser.value = null; 
+    };
+
+    return {
+      currentUser,
+      logout,
+    };
+  },
+};
+</script>
     <style scoped>
     .b-example-divider {
       height: 3rem;
