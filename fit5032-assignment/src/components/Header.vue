@@ -26,7 +26,9 @@
 
 
 <script>
+
 import { ref, watch } from 'vue';
+
 
 export default {
   setup() {
@@ -88,4 +90,28 @@ export default {
     .dropdown-toggle {
       outline: 0;
     }
+
+      @media (max-width: 575.98px) {
+    .nav-pills .nav-link {
+      font-size: 0.875rem; /* Smaller text on extra small screens */
+    }
+  }
+
+  @media (min-width: 576px) and (max-width: 767.98px) {
+    .nav-pills .nav-link {
+      font-size: 1rem; /* Adjust font size for small screens */
+    }
+  }
+
+  @media (min-width: 768px) and (max-width: 991.98px) {
+    .nav-pills .nav-link {
+      font-size: 1.125rem; /* Larger text for medium screens */
+    }
+  }
+
+  @media (min-width: 992px) {
+    .nav-pills .nav-link {
+      font-size: 1.25rem; /* Larger text for large screens */
+    }
+  }
     </style>

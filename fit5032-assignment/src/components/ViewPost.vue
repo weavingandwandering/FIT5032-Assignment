@@ -8,6 +8,12 @@
           <h5 class="card-title">Author: {{ post.currentuser }}</h5>
           <h6 class="card-subtitle mb-2 text-muted">Role: {{ getRole(post.currentuser) }}</h6>
           <p class="card-text">{{ post.content }}</p>
+          <star-rating 
+           @update:rating ="setRating"
+          :increment=0.5
+          star-size=24
+          v-model="ratingValue">
+        </star-rating>
           <router-link to="/forum" class="btn btn-primary">Back to Forum</router-link>
         </div>
       </div>
@@ -17,20 +23,27 @@
   <script setup>
   import { ref, onMounted } from 'vue';
   import { useRoute } from 'vue-router';
+  import StarRating from 'vue-star-rating'
   
   const route = useRoute();
   const post = ref({});
 
+//   const ratingValue = ref(0);
 
   
-  // Function to get the role of the user
   const getRole = (username) => {
+    console.log("Username",username);
     const users = JSON.parse(localStorage.getItem('users')) || [];
-    const findUser = users.find((user) => user.username === username);
-    return findUser ? findUser.role : 'Unknown';
-  };
-  
-  // Fetch the post details based on the route parameter
+    const findUser = users.find(user => user.username === username);
+    
+    if (findUser) {
+        console.log("FIND:", findUser);
+        return findUser.role;
+    } else {
+        console.log("User not found");
+        return null;  // or some default value like 'Guest'
+    }
+};
   onMounted(() => {
  
     const postID = route.params.id;
@@ -41,6 +54,23 @@
     post.value = findPost;
     console.log("Post", findPost);
   });
+
+  const setRating = (ratingValue) => {
+    console.log("Rating received:");
+    const ratings = JSON.parse(localStorage.getItem('rating')) || [];
+    const postID = route.params.id;
+    let findRating = ratings.find((rating) => rating.id == postID);
+    console.log("Ratin", ratingValue);
+    if (findRating) {
+        findRating.rating.push(ratingValue);
+    } else {
+        findRating = { id: postID, rating: [ratingValue] };
+        ratings.push(findRating);
+    }
+    localStorage.setItem('rating', JSON.stringify(ratings));
+    console.log("Updated ratings:", ratings);
+  
+};
 
 
   </script>

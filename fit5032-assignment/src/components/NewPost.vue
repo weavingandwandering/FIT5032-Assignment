@@ -83,7 +83,13 @@
       const idList = JSON.parse(localStorage.getItem('idNo')) || [];
       idList.push({id});
       localStorage.setItem('idNo', JSON.stringify(idList))
+    
+      const rating = {'id': id,'rating':[0]};
+      const ratings = JSON.parse(localStorage.getItem('rating')) || [];
 
+      ratings.push({rating});
+      localStorage.setItem('rating', ratings)
+    
     
   };
 

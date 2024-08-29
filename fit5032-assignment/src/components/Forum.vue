@@ -13,7 +13,7 @@
             <div class="fw-bold">Title: {{ card.title }}</div>
           <div>Author: {{ card.currentuser }}</div>
           <div>Role: {{ getRole(card.currentuser) }}</div>
-          <div>Rating: 0 </div>
+          <div>Average Rating: {{getRating(card.id)[0]}}/{{getRating(card.id)[1] }}</div>
         </div>
     </router-link>
     </div>
@@ -40,6 +40,25 @@ const getRole = (username) => {
     return findUser.role;
 };
 
+const getRating = (id) => {
+    console.log("ID",id);
+    const ratings = JSON.parse(localStorage.getItem('rating')) || [];
+    console.log(ratings);
+    const ratingList = ratings.find(rating => rating.id == id);
+    console.log("Rating", ratingList);
+    const rating = ratingList.rating;
+    let sum = 0;
+
+    for (let i = 0; i < rating.length; i++) {
+        sum += rating[i];
+    }
+
+    const average = rating.length > 0 ? sum / rating.length : 0;
+    return [average, rating.length];
+};
+
+
+
 
 
 </script>
@@ -49,7 +68,7 @@ const getRole = (username) => {
 .card {
   border: 1px solid #ddd;
   border-radius: 0.25rem;
-  box-shadow: 0 0 0.125rem rgba(0, 0, 0, 0.075);
+  box-shadow: 0 0 0.125rem #00000013;
 }
 
 .card-body {
@@ -58,6 +77,6 @@ const getRole = (username) => {
 
 .card-header {
   background-color: #f8f9fa;
-  border-bottom: 1px solid #ddd;
+  border-bottom: 1px solid #dddddd;
 }
 </style>
