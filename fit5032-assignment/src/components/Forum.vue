@@ -5,8 +5,8 @@
     </div>
     <div class="container mt-5">
     <div class="d-flex flex-column">
-    <div v-for="(card, index) in posts" :key="index" class="card mb-3">
-      <div class="card-body">
+    <div v-for="(card, index) in posts" :key="index" class="card mb-3" >
+      <router-link class="card-body" v-bind:to="'/viewpost' + card.id">
     
         <div class="d-flex justify-content-between mt-2">
             <div>Post No: {{ card.id }}</div>
@@ -15,10 +15,10 @@
           <div>Role: {{ getRole(card.currentuser) }}</div>
           <div>Rating: 0 </div>
         </div>
-      </div>
+    </router-link>
     </div>
 </div>
-  </div>
+</div>
 </template>
 
 <script setup>

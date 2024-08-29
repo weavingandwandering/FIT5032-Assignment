@@ -40,7 +40,7 @@ const routes = [
   component: NewPost
 }, 
 {
-  path: '/viewpost',
+  path: '/viewpost:id',
   name: 'ViewPost',
   component: ViewPost
 }
