@@ -8,11 +8,16 @@
         <li class="nav-item">
           <router-link to="/about" class="nav-link" active-class="active">About</router-link>
         </li>
-       
+        <li class="nav-item">
+          <router-link to="/ecalendar" class="nav-link" active-class="active">Elderly Calendar</router-link>
+        </li>
+        <li class="nav-item">
+          <router-link to="/vcalendar" class="nav-link" active-class="active">Volunteer Calendar</router-link>
+        </li>
+        
         <li class="nav-item" v-if="currentUser === null">
           <router-link to="/login" class="nav-link" active-class="active">Login</router-link>
         </li>
-      
         <li class="nav-item d-flex align-items-center" v-else>
           <router-link to="/forum" class="nav-link" active-class="active">Forum</router-link>
           <div class="d-flex flex-column align-items-end">
@@ -26,94 +31,84 @@
   </div>
 </template>
 
-
-<script>
-
+<script setup>
 import { ref, watch } from 'vue';
 
+const currentUser = ref(localStorage.getItem('currentUser') || null);
 
-export default {
-  setup() {
-    const currentUser = ref(localStorage.getItem('currentUser'));
-    console.log("Current User", currentUser);
+// Watch for changes in localStorage
+watch(
+  () => localStorage.getItem('currentUser'),
+  (newVal) => {
+    currentUser.value = newVal;
+  }
+);
 
-    // Watch for changes in localStorage or if the user data changes
-    watch(
-      () => localStorage.getItem('currentUser'),
-      (newVal) => {
-        currentUser.value = newVal;
-      }
-    );
-
-    const logout = () => {
-      localStorage.removeItem('currentUser');
-      currentUser.value = null; 
-    };
-
-    return {
-      currentUser,
-      logout,
-    };
-  },
+const logout = () => {
+  localStorage.removeItem('currentUser');
+  currentUser.value = null;
 };
 </script>
-    <style scoped>
-    .b-example-divider {
-      height: 3rem;
-      background-color: rgba(0, 0, 0, 0.1);
-      border: solid rgba(0, 0, 0, 0.15);
-      border-width: 1px 0;
-      box-shadow:
-        inset 0 0.5em 1.5em rgba(0, 0, 0, 0.1),
-        inset 0 0.125em 0.5em rgba(0, 0, 0, 0.15);
-    }
-    
-    .form-control-dark {
-      color: #fff;
-      background-color: var(--bs-dark);
-      border-color: var(--bs-gray);
-    }
-    .form-control-dark:focus {
-      color: #fff;
-      background-color: var(--bs-dark);
-      border-color: #fff;
-      box-shadow: 0 0 0 0.25rem rgba(255, 255, 255, 0.25);
-    }
-    
-    .bi {
-      vertical-align: -0.125em;
-      fill: currentColor;
-    }
-    
-    .text-small {
-      font-size: 85%;
-    }
-    
-    .dropdown-toggle {
-      outline: 0;
-    }
 
-      @media (max-width: 576px) {
-    .nav-pills .nav-link {
-      font-size: 0.875rem; 
-    }
-  }
+<style scoped>
+/* Scoped styles for your component */
+.b-example-divider {
+  height: 3rem;
+  background-color: rgba(0, 0, 0, 0.1);
+  border: solid rgba(0, 0, 0, 0.15);
+  border-width: 1px 0;
+  box-shadow:
+    inset 0 0.5em 1.5em rgba(0, 0, 0, 0.1),
+    inset 0 0.125em 0.5em rgba(0, 0, 0, 0.15);
+}
 
-  @media (min-width: 577) and (max-width: 768px) {
-    .nav-pills .nav-link {
-      font-size: 1rem; 
-    }
-  }
+.form-control-dark {
+  color: #fff;
+  background-color: var(--bs-dark);
+  border-color: var(--bs-gray);
+}
 
-  @media (min-width: 769px) and (max-width: 992px) {
-    .nav-pills .nav-link {
-      font-size: 1.125rem; 
-    }
-  }
+.form-control-dark:focus {
+  color: #fff;
+  background-color: var(--bs-dark);
+  border-color: #fff;
+  box-shadow: 0 0 0 0.25rem rgba(255, 255, 255, 0.25);
+}
 
-  @media (min-width: 993px) {
-    .nav-pills .nav-link {
-      font-size: 1.25rem; 
-    }
+.bi {
+  vertical-align: -0.125em;
+  fill: currentColor;
+}
+
+.text-small {
+  font-size: 85%;
+}
+
+.dropdown-toggle {
+  outline: 0;
+}
+
+@media (max-width: 576px) {
+  .nav-pills .nav-link {
+    font-size: 0.875rem;
   }
-    </style>
+}
+
+@media (min-width: 577px) and (max-width: 768px) {
+  .nav-pills .nav-link {
+    font-size: 1rem;
+  }
+}
+
+@media (min-width: 769px) and (max-width: 992px) {
+  .nav-pills .nav-link {
+    font-size: 1.125rem;
+  }
+}
+
+@media (min-width: 993px) {
+  .nav-pills .nav-link {
+    font-size: 1.25rem;
+  }
+}
+</style>

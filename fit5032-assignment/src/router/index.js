@@ -6,6 +6,8 @@ import SignUp from '@/components/SignUp.vue'
 import Forum from '@/components/Forum.vue'
 import NewPost from '../components/NewPost.vue'
 import ViewPost from '@/components/ViewPost.vue'
+import ECalendar from '../components/ECalendar.vue'
+import VCalendar from '@/components/VCalendar.vue'
 
 
 const routes = [
@@ -43,6 +45,16 @@ const routes = [
   path: '/viewpost:id',
   name: 'ViewPost',
   component: ViewPost
+}, 
+{
+  path: '/ecalendar',
+  name: 'ECalendar',
+  component: ECalendar
+}, 
+{
+  path: '/vcalendar',
+  name: 'VCalendar',
+  component: VCalendar
 }
 ]
 
