@@ -5,7 +5,7 @@
       </div>
     </div>
       <div class="jumbotron text-center my-1">
-        <h1 class="display-10">Content on this page is AI generated</h1>
+        <h1 class="display-10">The Golden Hub</h1>
       </div>
   </template>
   

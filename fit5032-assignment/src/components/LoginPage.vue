@@ -98,9 +98,7 @@
     font-size: 18px;
     padding: 20px;
   }
-  .login{
-    max-width: 400;
-  }
+  
 
 }
 
@@ -108,6 +106,7 @@
   .form-label {
     font-size: 20px;
   }
+  
 
 }
 
@@ -122,9 +121,7 @@
   .form-label {
     font-size: 24px;
   }
-  .login{
-    width: 200;
-  }
+  
 }
   </style>
   
