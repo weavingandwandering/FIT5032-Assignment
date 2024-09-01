@@ -59,7 +59,7 @@
     title: null,
     content: null,
   });
-
+  //submits a new post after validation of content and title
   const submitPost = () =>{
     const id = JSON.parse(localStorage.getItem('idNo')) || [];
     const idNo = id.length + 1 
@@ -72,7 +72,7 @@
 
 
   }
-
+  //saves the post to local Storage
   const savePost = (id, title, content, currentuser) => {
       const post = JSON.parse(localStorage.getItem('post')) || [];
       console.log(post);

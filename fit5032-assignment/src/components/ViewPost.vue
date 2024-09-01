@@ -44,7 +44,7 @@
   display: " ",
  }); 
 
-  
+  //gets the role of the current User to be displayed in the forum
   const getRole = (username) => {
     console.log("Username",username);
     console.log("CHECKiNG", hasRatedthePost.value.display);
@@ -60,6 +60,7 @@
         return null;  // or some default value like 'Guest'
     }
 };
+//refreshes everytime the page is entered
   onMounted(() => {
  
     const postID = route.params.id;
@@ -77,6 +78,7 @@
     checkRating();
   });
 
+  //checks whether the user has already rated this post
   const checkRating = () => {
     const postID = route.params.id;
     const currUser = localStorage.getItem('currentUser');
@@ -95,6 +97,8 @@
 
   }
 
+  //sets the rating for the post if the user has already not rated this post. the checks happen twice to ensure it does not happen in the same turn
+
   const setRating = (ratingValue) => {
     const currUser = localStorage.getItem('currentUser');
     
@@ -102,7 +106,7 @@
     
     const findUserRating = userRated.find((userRate) => userRate.username === currUser);
     const postID = route.params.id;
-    
+    //checks whether there is an existing rate for that post
     if (!findUserRating) {
         console.log("Rating received:");
         

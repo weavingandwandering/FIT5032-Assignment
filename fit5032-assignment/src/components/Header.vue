@@ -1,5 +1,6 @@
 <template>
   <div class="container">
+    <!-- uses the header from the Bootstrap to display the different elements  -->
     <header class="d-flex justify-content-between py-3">
       <ul class="nav nav-pills">
         <li class="nav-item">

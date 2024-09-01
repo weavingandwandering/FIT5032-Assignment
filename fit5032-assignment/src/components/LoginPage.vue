@@ -52,10 +52,11 @@
     const error = ref({
         error: null
     })
+    //leads to sign up
     const signForm = () => {
         router.push('./signup')
     };
-
+    //submits the form after validation
     const submitForm = () => {
         authenticateUser(formData.value.username, formData.value.password);
         if(isAuthenticated.value.result === true){
@@ -67,9 +68,10 @@
        
     };
 
+    
     const isAuthenticated = ref({result: false});
  
-
+    //checks whether the account exists
    
     const authenticateUser = (username, password) => {
       const users = JSON.parse(localStorage.getItem('users')) || [];

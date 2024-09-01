@@ -31,7 +31,7 @@ const newPost = () => {
 
 const posts =  JSON.parse(localStorage.getItem('post')) || [];
 
-
+//gets the role of the current user so it can be displayed 
 const getRole = (username) => {
     console.log("Username",username);
     const users = JSON.parse(localStorage.getItem('users')) || [];
@@ -45,7 +45,7 @@ const getRole = (username) => {
         return null;  // or some default value like 'Guest'
     }
 };
-
+//gets the average rating for the post so that it can be displayed
 const getRating = (id) => {
     console.log("ID", id);
     const ratings = JSON.parse(localStorage.getItem('rating')) || [];
@@ -65,7 +65,7 @@ const getRating = (id) => {
     }
 
     const average = sum / rating.length;
-    return [average, rating.length];
+    return [average.toFixed(2), rating.length];
 };
 
 

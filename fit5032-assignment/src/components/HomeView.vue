@@ -10,7 +10,7 @@
   </template>
   
   <script setup>
-  // No script needed for this basic template
+  //Blank page, filler
   </script>
   
   <style scoped>
