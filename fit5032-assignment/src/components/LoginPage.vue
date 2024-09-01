@@ -92,10 +92,40 @@
   </script>
   
   <style scoped>
-  .login {
-    max-width: 400px;
-    margin: 0 auto;
+  
+  @media (min-width: 576px) {
+    .form-label {
+    font-size: 18px;
+    padding: 20px;
   }
+  .login{
+    max-width: 400;
+  }
+
+}
+
+@media (min-width: 768px) {
+  .form-label {
+    font-size: 20px;
+  }
+
+}
+
+@media (min-width: 992px) {
+  .form-label {
+    font-size: 22px;
+  }
+
+}
+
+@media (min-width: 1400px) {
+  .form-label {
+    font-size: 24px;
+  }
+  .login{
+    width: 600;
+  }
+}
   </style>
   
   
