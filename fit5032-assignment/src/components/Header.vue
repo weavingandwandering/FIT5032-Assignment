@@ -8,14 +8,16 @@
         <li class="nav-item">
           <router-link to="/about" class="nav-link" active-class="active">About</router-link>
         </li>
+       
         <li class="nav-item" v-if="currentUser === null">
           <router-link to="/login" class="nav-link" active-class="active">Login</router-link>
         </li>
+      
         <li class="nav-item d-flex align-items-center" v-else>
           <router-link to="/forum" class="nav-link" active-class="active">Forum</router-link>
           <div class="d-flex flex-column align-items-end">
-            <p class="mb-0 text-success">Logged in as</p>
-            <h6 class="mb-0 fw-bold text-dark">{{ currentUser }}</h6>
+            <p class="text-success ms-3 mb-0">Logged in as</p>
+            <h6 class="fw-bold text-dark ms-3">{{ currentUser }}</h6>
           </div>
           <button class="btn btn-outline-success ms-3" @click="logout">Log Out</button>
         </li>
@@ -91,27 +93,27 @@ export default {
       outline: 0;
     }
 
-      @media (max-width: 575.98px) {
+      @media (max-width: 576px) {
     .nav-pills .nav-link {
-      font-size: 0.875rem; /* Smaller text on extra small screens */
+      font-size: 0.875rem; 
     }
   }
 
-  @media (min-width: 576px) and (max-width: 767.98px) {
+  @media (min-width: 577) and (max-width: 768px) {
     .nav-pills .nav-link {
-      font-size: 1rem; /* Adjust font size for small screens */
+      font-size: 1rem; 
     }
   }
 
-  @media (min-width: 768px) and (max-width: 991.98px) {
+  @media (min-width: 769px) and (max-width: 992px) {
     .nav-pills .nav-link {
-      font-size: 1.125rem; /* Larger text for medium screens */
+      font-size: 1.125rem; 
     }
   }
 
-  @media (min-width: 992px) {
+  @media (min-width: 993px) {
     .nav-pills .nav-link {
-      font-size: 1.25rem; /* Larger text for large screens */
+      font-size: 1.25rem; 
     }
   }
     </style>

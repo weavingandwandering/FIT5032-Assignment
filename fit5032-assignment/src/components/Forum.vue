@@ -36,16 +36,27 @@ const getRole = (username) => {
     console.log("Username",username);
     const users = JSON.parse(localStorage.getItem('users')) || [];
     const findUser = users.find(user => user.username === username);
-
-    return findUser.role;
+    
+    if (findUser) {
+        console.log("FIND:", findUser);
+        return findUser.role;
+    } else {
+        console.log("User not found");
+        return null;  // or some default value like 'Guest'
+    }
 };
 
 const getRating = (id) => {
-    console.log("ID",id);
+    console.log("ID", id);
     const ratings = JSON.parse(localStorage.getItem('rating')) || [];
     console.log(ratings);
     const ratingList = ratings.find(rating => rating.id == id);
     console.log("Rating", ratingList);
+
+    if (!ratingList) {
+        return [0, 0]; 
+    }
+
     const rating = ratingList.rating;
     let sum = 0;
 
@@ -53,7 +64,7 @@ const getRating = (id) => {
         sum += rating[i];
     }
 
-    const average = rating.length > 0 ? sum / rating.length : 0;
+    const average = sum / rating.length;
     return [average, rating.length];
 };
 

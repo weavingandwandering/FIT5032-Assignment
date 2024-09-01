@@ -38,6 +38,7 @@
 
     import { ref } from 'vue';
     import { useRouter } from 'vue-router'
+    import bcrypt from 'bcryptjs';
 
     const formData = ref({
         username: '',
@@ -71,10 +72,10 @@
 
    
     const authenticateUser = (username, password) => {
-      const users = JSON.parse(localStorage.getItem('users'));
+      const users = JSON.parse(localStorage.getItem('users')) || [];
       console.log("Users", users);
-      const findUser = users.find(user => user.username === username && user.password === password);
-
+      console.log("Password", password);
+      const findUser = users.find(user => user.username === username && bcrypt.compareSync(password, user.password));
       if(findUser){
         isAuthenticated.value.result = true;
         localStorage.setItem('currentUser', username);

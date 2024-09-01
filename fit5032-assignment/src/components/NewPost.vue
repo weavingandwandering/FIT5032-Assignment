@@ -47,9 +47,9 @@
   
   <script setup>
   import { ref } from 'vue';
+  import { useRouter } from 'vue-router'; 
 
-
-  
+  const router = useRouter();
   const formData = ref({
     title: '',
     content: '',
@@ -67,7 +67,7 @@
     validateTitle();
     if(error.value.title == null && error.value.content == null ){
         savePost(idNo, formData.value.title, formData.value.content, localStorage.getItem('currentUser'));
-
+        router.push('/forum');
     }
 
 
@@ -84,11 +84,12 @@
       idList.push({id});
       localStorage.setItem('idNo', JSON.stringify(idList))
     
-      const rating = {'id': id,'rating':[0]};
       const ratings = JSON.parse(localStorage.getItem('rating')) || [];
-
+      const rating = {'id': id,'rating':[0]};
+      
       ratings.push({rating});
-      localStorage.setItem('rating', ratings)
+      localStorage.setItem('rating', JSON.stringify(ratings));
+      console.log("Set rating", JSON.parse(localStorage.getItem('rating')));
     
     
   };

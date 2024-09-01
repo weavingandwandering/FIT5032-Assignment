@@ -87,6 +87,8 @@
 
     import { ref } from 'vue';
     import { useRouter } from 'vue-router';
+    import bcrypt from 'bcryptjs';
+
 
 
     const formData = ref({
@@ -178,15 +180,16 @@
 
 
      const saveUser = (username, password, email, role) => {
-      const users = JSON.parse(localSotorage.getItem('users')) || [];
+      const users = JSON.parse(localStorage.getItem('users')) || [];
       console.log(users);
       const findUser = users.find(user => user.username === username);
-      const userEmail = users.find(user => user.email === email && user.password !== password);
-
+      const userEmail = users.find(user => user.email === email);
+      // hashing the password for security purposes, BR c.3
+      password = bcrypt.hashSync(password,11);
       if(findUser != null){
-        errors.value.error = "The username is taken"
+        errors.value.error = "The username is already in use"
       } else if(userEmail != null){
-        errors.value.error = "An account already exists with these details "
+        errors.value.error = "Please double check your details"
       } else{
       users.push({username, password, email, role});
       localStorage.setItem('users', JSON.stringify(users));

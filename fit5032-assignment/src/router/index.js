@@ -4,7 +4,7 @@ import LoginPage from '../components/LoginPage.vue'
 import AboutPage from '@/components/AboutPage.vue'
 import SignUp from '@/components/SignUp.vue'
 import Forum from '@/components/Forum.vue'
-import NewPost from '@/components/NewPost.vue'
+import NewPost from '../components/NewPost.vue'
 import ViewPost from '@/components/ViewPost.vue'
 
 
