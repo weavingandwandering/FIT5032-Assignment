@@ -48,14 +48,30 @@ const routes = [
 }, 
 {
   path: '/ecalendar',
-  name: 'ECalendar',
-  component: ECalendar
-}, 
+  component: ECalendar,
+  beforeEnter: (to, from, next) => {
+    const currUser = localStorage.getItem('currentUser');
+    const currRole = getRole(currUser);
+    if (currRole == "Elderly") {
+      next();
+    } else {
+      next('/vcalendar'); 
+    }
+  }
+},
 {
   path: '/vcalendar',
-  name: 'VCalendar',
-  component: VCalendar
-}
+  component: VCalendar,
+  beforeEnter: (to, from, next) => {
+    const currUser = localStorage.getItem('currentUser');
+    const currRole = getRole(currUser);
+    if (currRole == "Volunteer") {
+      next();
+    } else {
+      next('/ecalendar'); // Redirect to login if not authenticated
+    }
+  }
+},
 ]
 
 const router = createRouter({
@@ -64,3 +80,17 @@ const router = createRouter({
 })
 
 export default router
+
+const getRole = (username) => {
+  console.log("Username",username);
+  const users = JSON.parse(localStorage.getItem('users')) || [];
+  const findUser = users.find(user => user.username === username);
+  
+  if (findUser) {
+      console.log("FIND:", findUser);
+      return findUser.role;
+  } else {
+      console.log("User not found");
+      return null;  // or some default value like 'Guest'
+  }
+};

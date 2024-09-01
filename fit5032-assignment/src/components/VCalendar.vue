@@ -1,6 +1,6 @@
 <template>
     <div class="container my-4">
-    <h2 class="mb-4">Upcoming Events</h2>
+    <h2 class="mb-4">Upcoming Events for the Volunteers</h2>
     <h6 class="mb-4">Content Generated using ChatGPT</h6>
     <div class="row">
       <div v-for="event in calendar.events" :key="event.name" class="col-md-4 mb-3">

@@ -74,7 +74,8 @@
     const authenticateUser = (username, password) => {
       const users = JSON.parse(localStorage.getItem('users')) || [];
       console.log("Users", users);
-      console.log("Password", password);
+  
+
       const findUser = users.find(user => user.username === username && bcrypt.compareSync(password, user.password));
       if(findUser){
         isAuthenticated.value.result = true;

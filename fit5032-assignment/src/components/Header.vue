@@ -8,18 +8,15 @@
         <li class="nav-item">
           <router-link to="/about" class="nav-link" active-class="active">About</router-link>
         </li>
-        <li class="nav-item">
-          <router-link to="/ecalendar" class="nav-link" active-class="active">Elderly Calendar</router-link>
-        </li>
-        <li class="nav-item">
-          <router-link to="/vcalendar" class="nav-link" active-class="active">Volunteer Calendar</router-link>
-        </li>
-        
+       
         <li class="nav-item" v-if="currentUser === null">
           <router-link to="/login" class="nav-link" active-class="active">Login</router-link>
         </li>
         <li class="nav-item d-flex align-items-center" v-else>
           <router-link to="/forum" class="nav-link" active-class="active">Forum</router-link>
+          <router-link to="/ecalendar" class="nav-link" active-class="active">Elderly Calendar</router-link>
+          <router-link to="/vcalendar" class="nav-link" active-class="active">Volunteer Calendar</router-link>
+        
           <div class="d-flex flex-column align-items-end">
             <p class="text-success ms-3 mb-0">Logged in as</p>
             <h6 class="fw-bold text-dark ms-3">{{ currentUser }}</h6>
@@ -33,8 +30,11 @@
 
 <script setup>
 import { ref, watch } from 'vue';
+import { useRouter } from 'vue-router';
+
 
 const currentUser = ref(localStorage.getItem('currentUser') || null);
+const router = useRouter();
 
 // Watch for changes in localStorage
 watch(
@@ -45,8 +45,11 @@ watch(
 );
 
 const logout = () => {
+  
   localStorage.removeItem('currentUser');
+  router.push('/about');
   currentUser.value = null;
+  
 };
 </script>
 
