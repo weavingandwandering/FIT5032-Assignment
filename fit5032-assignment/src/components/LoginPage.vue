@@ -123,7 +123,7 @@
     font-size: 24px;
   }
   .login{
-    width: 600;
+    width: 200;
   }
 }
   </style>

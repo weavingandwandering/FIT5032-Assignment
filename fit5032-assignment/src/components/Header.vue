@@ -36,7 +36,6 @@ import { useRouter } from 'vue-router';
 const currentUser = ref(localStorage.getItem('currentUser') || null);
 const router = useRouter();
 
-// Watch for changes in localStorage
 watch(
   () => localStorage.getItem('currentUser'),
   (newVal) => {
@@ -54,7 +53,6 @@ const logout = () => {
 </script>
 
 <style scoped>
-/* Scoped styles for your component */
 .b-example-divider {
   height: 3rem;
   background-color: rgba(0, 0, 0, 0.1);
