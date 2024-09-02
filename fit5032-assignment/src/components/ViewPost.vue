@@ -57,7 +57,7 @@
         return findUser.role;
     } else {
         console.log("User not found");
-        return null;  // or some default value like 'Guest'
+        return null;  
     }
 };
 //refreshes everytime the page is entered
