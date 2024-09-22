@@ -1,0 +1,93 @@
+<template>
+    <h1 class="text-center my-4">Welcome to the Forum</h1>
+    <div>
+        <button class="text-success align-centre" @click = "newPost"> New post </button>
+    </div>
+    <div class="container mt-5">
+    <div class="d-flex flex-column">
+    <div v-for="(card, index) in posts" :key="index" class="card mb-3" >
+      <router-link class="card-body" v-bind:to="'/viewpost' + card.id">
+    
+        <div class="d-flex justify-content-between mt-2">
+            <div>Post No: {{ card.id }}</div>
+            <div class="fw-bold">Title: {{ card.title }}</div>
+          <div>Author: {{ card.currentuser }}</div>
+          <div>Role: {{ getRole(card.currentuser) }}</div>
+          <div>Average Rating: {{getRating(card.id)[0]}}/{{getRating(card.id)[1] }}</div>
+        </div>
+    </router-link>
+    </div>
+</div>
+</div>
+</template>
+
+<script setup>
+import { useRouter } from 'vue-router';
+
+const router = useRouter();
+const newPost = () => {
+        router.push('/newpost')
+    };
+
+const posts =  JSON.parse(localStorage.getItem('post')) || [];
+
+//gets the role of the current user so it can be displayed 
+const getRole = (username) => {
+    console.log("Username",username);
+    const users = JSON.parse(localStorage.getItem('users')) || [];
+    const findUser = users.find(user => user.username === username);
+    
+    if (findUser) {
+        console.log("FIND:", findUser);
+        return findUser.role;
+    } else {
+        console.log("User not found");
+        return null;  // or some default value like 'Guest'
+    }
+};
+//gets the average rating for the post so that it can be displayed
+const getRating = (id) => {
+    console.log("ID", id);
+    const ratings = JSON.parse(localStorage.getItem('rating')) || [];
+    console.log(ratings);
+    const ratingList = ratings.find(rating => rating.id == id);
+    console.log("Rating", ratingList);
+
+    if (!ratingList) {
+        return [0, 0]; 
+    }
+
+    const rating = ratingList.rating;
+    let sum = 0;
+
+    for (let i = 0; i < rating.length; i++) {
+        sum += rating[i];
+    }
+
+    const average = sum / rating.length;
+    return [average.toFixed(2), rating.length];
+};
+
+
+
+
+
+</script>
+
+
+<style scoped>
+.card {
+  border: 1px solid #ddd;
+  border-radius: 0.25rem;
+  box-shadow: 0 0 0.125rem #00000013;
+}
+
+.card-body {
+  padding: 1.25rem;
+}
+
+.card-header {
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #dddddd;
+}
+</style>
