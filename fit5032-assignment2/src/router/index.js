@@ -12,6 +12,8 @@ import Video from '../components/Resources/Video.vue'
 import Articles from '../components/Resources/Articles.vue'
 import Checklist from '../components/Resources/Checklist.vue'
 import Chatbot from '@/components/Community/Chatbot.vue'
+import Donation from '../components/GetInvolved/Donation.vue'
+import Volunteering from '../components/GetInvolved/Volunteering.vue'
 
 
 
@@ -98,6 +100,17 @@ const routes = [
   name: Chatbot, 
   component: Chatbot
 }, 
+{
+  path: '/donation', 
+  name: Donation, 
+  component: Donation
+}, 
+{
+  path: '/volunteering', 
+  name: Volunteering, 
+  component: Volunteering
+}, 
+
 ]
 
 const router = createRouter({
@@ -117,6 +130,6 @@ const getRole = (username) => {
       return findUser.role;
   } else {
       console.log("User not found");
-      return null;  // or some default value like 'Guest'
+      return null;  
   }
 };

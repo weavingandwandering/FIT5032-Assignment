@@ -18,7 +18,7 @@
 </template>
 <script  setup>
 //gets the stored content from the json files
-import calendar from "../Storage/events.json";
+import calendar from "../../Storage/events.json";
 console.log(calendar)
 //html script dynamically displays the content in the json files using v-for and loops
 

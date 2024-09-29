@@ -16,7 +16,7 @@
   </div>
 </template>
 <script  setup>
-import calendar from "../Storage/events.json";
+import calendar from "../../Storage/events.json";
 console.log(calendar)
 
 </script>
