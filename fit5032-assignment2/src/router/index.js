@@ -1,13 +1,18 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../components/HomeView.vue'
 import LoginPage from '../components/LoginPage.vue'
-import AboutPage from '@/components/AboutPage.vue'
-import SignUp from '@/components/SignUp.vue'
-import Forum from '@/components/Forum.vue'
-import NewPost from '../components/NewPost.vue'
-import ViewPost from '@/components/ViewPost.vue'
-import ECalendar from '../components/ECalendar.vue'
-import VCalendar from '@/components/VCalendar.vue'
+import AboutPage from '../components/AboutPage.vue'
+import SignUp from '../components/SignUp.vue'
+import Forum from '../components/Community/Forum.vue'
+import NewPost from '../components/Community/NewPost.vue'
+import ViewPost from '../components/Community/ViewPost.vue'
+import ECalendar from '../components/WhatsOn/ECalendar.vue'
+import VCalendar from '../components/WhatsOn/VCalendar.vue'
+import Video from '../components/Resources/Video.vue'
+import Articles from '../components/Resources/Articles.vue'
+import Checklist from '../components/Resources/Checklist.vue'
+import Chatbot from '@/components/Community/Chatbot.vue'
+
 
 
 const routes = [
@@ -59,6 +64,7 @@ const routes = [
     }
   }
 },
+
 {
   path: '/vcalendar',
   component: VCalendar,
@@ -72,6 +78,26 @@ const routes = [
     }
   }
 },
+{
+  path: '/videos',
+  name: 'Video',
+  component: Video
+}, 
+{
+  path: '/articles',
+  name: 'Articles',
+  component: Articles
+}, 
+{
+  path: '/health-checklist', 
+  name: Checklist, 
+  component: Checklist
+}, 
+{
+  path: '/chatbot', 
+  name: Chatbot, 
+  component: Chatbot
+}, 
 ]
 
 const router = createRouter({

@@ -1,306 +1,128 @@
 <template>
+  <header class="navbar navbar-expand-lg navbar-light bg-light w-100">
+    <div class="container-fluid">
+      <div class="navbar-logo d-flex align-items-center">
+        <span>Golden Years Hub</span>
+      </div>
 
-  <section class="dropDownMenuWrapper" :class="{ 'dropDownMenuWrapper--dark' : isDarkMode, 'dropDownMenuWrapper--noTitle' : !menuTitle }">
 
-    <button class="dropDownMenuButton" ref="menu" @click="openClose" :class="{ 'dropDownMenuButton--dark' : isDarkMode }">
-      {{ menuTitle || 'Menu' }}
-    </button>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent" aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
 
-    <div class="iconWrapper" :class="{ 'iconWrapper--noTitle' : !menuTitle }">
-      <div class="bar1" :class="{ 'bar1--open' : isOpen , 'bar1--dark' : isDarkMode }" />
-      <div class="bar2" :class="{ 'bar2--open' : isOpen , 'bar2--dark' : isDarkMode }" />
-      <div class="bar3" :class="{ 'bar3--open' : isOpen , 'bar3--dark' : isDarkMode }" />
+      <div class="collapse navbar-collapse" id="navbarContent">
+        <ul class="navbar-nav ms-auto me-auto">
+          <li class="nav-item">
+            <router-link to="/about" class="nav-link" active-class="active">About Us</router-link>
+          </li>
+
+          <li class="nav-item dropdown" @click="toggleDropdown('resourcesDropdown')">
+            <a class="nav-link dropdown-toggle" role="button" aria-expanded="isOpen.resourcesDropdown">Resources</a>
+            <ul v-if="isOpen.resourcesDropdown" class="dropdown-menu">
+              <li><router-link to="/videos" class="dropdown-item">Videos</router-link></li>
+              <li><router-link to="/articles" class="dropdown-item">Articles</router-link></li>
+              <li><router-link to="/health-checklist" class="dropdown-item">Health Checklist/Reminders</router-link></li>
+            </ul>
+          </li>
+
+          <li class="nav-item dropdown" @click="toggleDropdown('communityDropdown')">
+            <a class="nav-link dropdown-toggle" role="button" aria-expanded="isOpen.communityDropdown">Community Space</a>
+            <ul v-if="isOpen.communityDropdown" class="dropdown-menu">
+              <li><router-link to="/forum" class="dropdown-item">Community Forum</router-link></li>
+              <li><router-link to="/chatbot" class="dropdown-item">Chatbot</router-link></li>
+            </ul>
+          </li>
+
+          <li class="nav-item dropdown" @click="toggleDropdown('whatsOnDropdown')">
+            <a class="nav-link dropdown-toggle" role="button" aria-expanded="isOpen.whatsOnDropdown">What's On</a>
+            <ul v-if="isOpen.whatsOnDropdown" class="dropdown-menu">
+              <li><router-link to="/calendar-elderly" class="dropdown-item">Calendar for Elderly</router-link></li>
+              <li><router-link to="/registration" class="dropdown-item">Registration</router-link></li>
+              <li><router-link to="/calendar-volunteers" class="dropdown-item">Calendar for Volunteers</router-link></li>
+            </ul>
+          </li>
+
+          <!-- Get Involved Dropdown -->
+          <li class="nav-item dropdown" @click="toggleDropdown('getInvolvedDropdown')">
+            <a class="nav-link dropdown-toggle" role="button" aria-expanded="isOpen.getInvolvedDropdown">Get Involved</a>
+            <ul v-if="isOpen.getInvolvedDropdown" class="dropdown-menu">
+              <li><router-link to="/donation" class="dropdown-item">Donation</router-link></li>
+              <li><router-link to="/volunteering" class="dropdown-item">Volunteering</router-link></li>
+            </ul>
+          </li>
+
+          <!-- Login / Logout Logic -->
+          <li class="nav-item" v-if="currentUser === null">
+            <router-link to="/login" class="nav-link" active-class="active">Login</router-link>
+          </li>
+            <div class="d-flex flex-column align-items-end">
+              <p class="text-success ms-3 mb-0">Logged in as</p>
+              <h6 class="fw-bold text-dark ms-3">{{ currentUser }}</h6>
+            </div>
+            <button class="btn btn-outline-success ms-3" @click="logout">Log Out</button>
+        </ul>
+      </div>
     </div>
-
-    <section class="dropdownMenu" v-if="isOpen" :class="{ 'dropdownMenu--dark' : isDarkMode }">
-      <div class="menuArrow" :class="{ 'menuArrow--dark' : isDarkMode }" />
-      
-      <!-- Add routing links inside dropdown -->
-      <router-link to="/" class="option" active-class="active" aria-current="page">Home</router-link>
-      <router-link to="/about" class="option" active-class="active">About</router-link>
-      <router-link to="/forum" class="option" active-class="active">Forum</router-link>
-      <router-link to="/ecalendar" class="option" active-class="active">Elderly Calendar</router-link>
-      <router-link to="/vcalendar" class="option" active-class="active">Volunteer Calendar</router-link>
-
-      <!-- Conditional Login/Logout button -->
-      <div v-if="currentUser === null">
-        <router-link to="/login" class="option" active-class="active">Login</router-link>
-      </div>
-      <div v-else>
-        <p class="option">Logged in as {{ currentUser }}</p>
-        <button class="option btn btn-outline-success" @click="logout">Log Out</button>
-      </div>
-    </section>
-
-  </section>
-
+  </header>
 </template>
+<script setup>
+import { ref, watch } from 'vue';
+import { useRouter } from 'vue-router';
 
-<script>
-export default {
-  props: ["darkMode", "menuTitle"],
-  data() {
-    return {
-      isOpen: false,
-      isDarkMode: false,
-      currentUser: null, // You may need to bind this dynamically
-    };
-  },
-  methods: {
-    openClose() {
-      const closeListener = (e) => {
-        if (this.catchOutsideClick(e, this.$refs.menu)) {
-          window.removeEventListener('click', closeListener);
-          this.isOpen = false;
-        }
-      };
-      window.addEventListener('click', closeListener);
-      this.isOpen = !this.isOpen;
-    },
-    catchOutsideClick(event, dropdown) {
-      return dropdown !== event.target && this.isOpen;
-    },
-    logout() {
-      // Handle logout functionality
-      this.currentUser = null;
-    },
-  },
-  watch: {
-    darkMode(val) {
-      if (!val) this.isDarkMode = false;
-      if (val === 'force') this.isDarkMode = true;
-      if (val === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-        this.isDarkMode = true;
-      }
-    },
-  },
+const currentUser = ref(localStorage.getItem('currentUser') || null);
+const router = useRouter();
+const isOpen = ref({}); 
+
+watch(
+  () => localStorage.getItem('currentUser'),
+  (newVal) => {
+    currentUser.value = newVal;
+  }
+);
+
+
+const toggleDropdown = (dropdown) => {
+  Object.keys(isOpen.value).forEach((key) => {
+    if (key !== dropdown) isOpen.value[key] = false; 
+  });
+  isOpen.value[dropdown] = !isOpen.value[dropdown]; 
+};
+
+// Logout function
+const logout = () => {
+  localStorage.removeItem('currentUser');
+  currentUser.value = null;
+  router.push('/about'); 
 };
 </script>
 
-<style scoped >
-.dropDownMenuWrapper {
-  position: relative;
-  width: 500px;
-  height: 80px;
-  border-radius: 8px;
-  background: white;
-  border: 1px solid #eee;
-  box-shadow: 10px 10px 0 0 rgba(0, 0, 0, 0.03);
-  -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
-  text-align: left;
+
+<style scoped>
+.navbar-logo {
+  font-size: 1.5rem;
+  font-weight: bold;
 }
 
-.dropDownMenuWrapper * {
-  box-sizing: border-box;
+.navbar-nav .nav-link {
+  color: #333;
+  font-weight: 500;
 }
 
-.dropDownMenuButton {
-  border: none;
-  font-size: inherit;
-  background: none;
-  outline: none;
-  border-radius: 4px;
-  position: absolute;
-  top: 0;
-  left: 0;
+.navbar-nav .nav-link:hover {
+  color: #007bff;
+}
+
+.navbar-item {
+  margin: 0 10px;
+}
+
+.dropdown-menu {
+  background-color: #f8f9fa;
+  display: block;
+}
+
+.user-profile {
   display: flex;
   align-items: center;
-  padding: 0 70px 0 20px;
-  margin: 0;
-  line-height: 1;
-  width: 100%;
-  height: 100%;
-  z-index: 2;
-  cursor: pointer;
 }
-
-.dropDownMenuButton--dark {
-  color: #eee;
-}
-
-.iconWrapper {
-  width: 25px;
-  height: 25px;
-  position: absolute;
-  right: 30px;
-  top: 50%;
-  transform: translate(0, -50%);
-  z-index: 1;
-}
-
-.bar1 {
-  width: 100%;
-  max-width: 28px;
-  height: 3px;
-  background: blue;
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  border-radius: 9999px;
-  transform: translate(-50%, calc(-50% - 8px));
-  transition: all 0.2s ease;
-}
-
-.bar1--dark {
-  background: #eee;
-}
-
-.bar1--open {
-  transform: translate(-50%, -50%) rotate(45deg);
-  margin-top: 0;
-  background: red;
-}
-
-.bar2 {
-  width: 100%;
-  max-width: 28px;
-  height: 3px;
-  background: blue;
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  border-radius: 9999px;
-  opacity: 1;
-  transform: translate(-50%, -50%);
-  transition: all 0.2s ease;
-}
-
-.bar2--dark {
-  background: #eee;
-}
-
-.bar2--open {
-  opacity: 0;
-}
-
-.bar3 {
-  width: 100%;
-  max-width: 28px;
-  height: 3px;
-  background: blue;
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  border-radius: 9999px;
-  transform: translate(-50%, calc(-50% + 8px));
-  transition: all 0.2s ease;
-}
-
-.bar3--dark {
-  background: #eee;
-}
-
-.bar3--open {
-  top: 50%;
-  transform: translate(-50%, -50%) rotate(-45deg);
-  background: red;
-}
-
-.iconWrapper--noTitle {
-  left: 0;
-  top: 0;
-  bottom: 0;
-  right: 0;
-  width: auto;
-  height: auto;
-  transform: none;
-}
-
-.dropdownMenu {
-  position: absolute;
-  top: 100%;
-  width: 100%;
-  min-width: 300px;
-  min-height: 10px;
-  border-radius: 8px;
-  border: 1px solid #eee;
-  box-shadow: 10px 10px 0 0 rgba(0, 0, 0, 0.03);
-  background: white;
-  padding: 10px 30px;
-  animation: menu 0.3s ease forwards;
-}
-
-.menuArrow {
-  width: 20px;
-  height: 20px;
-  position: absolute;
-  top: -10px;
-  left: 20px;
-  border-left: 1px solid #eee;
-  border-top: 1px solid #eee;
-  background: white;
-  transform: rotate(45deg);
-  border-radius: 4px 0 0 0;
-}
-
-.menuArrow--dark {
-  background: #333;
-  border: none;
-}
-
-.option {
-  width: 100%;
-  border-bottom: 1px solid #eee;
-  padding: 20px 0;
-  cursor: pointer;
-  position: relative;
-  z-index: 2;
-}
-
-.option:last-child {
-  border-bottom: 0;
-}
-
-.option * {
-  color: inherit;
-  text-decoration: none;
-  background: none;
-  border: 0;
-  padding: 0;
-  outline: none;
-  cursor: pointer;
-}
-
-.desc {
-  opacity: 0.5;
-  display: block;
-  width: 100%;
-  font-size: 14px;
-  margin: 3px 0 0 0;
-  cursor: default;
-}
-
-.dropdownMenu--dark {
-  background: #333;
-  border: none;
-}
-
-.dropdownMenu--dark .option {
-  border-bottom: 1px solid #888;
-}
-
-.dropdownMenu--dark * {
-  color: #eee;
-}
-
-@keyframes menu {
-  from {
-    transform: translate3d(0, 30px, 0);
-  }
-  to {
-    transform: translate3d(0, 20px, 0);
-  }
-}
-
-.dropDownMenuWrapper--noTitle {
-  padding: 0;
-  width: 60px;
-  height: 60px;
-}
-
-.dropDownMenuWrapper--dark {
-  background: #333;
-  border: none;
-}
-
 </style>
