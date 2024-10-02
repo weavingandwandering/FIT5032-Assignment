@@ -36,9 +36,9 @@
           <li class="nav-item dropdown" @click="toggleDropdown('whatsOnDropdown')">
             <a class="nav-link dropdown-toggle" role="button" aria-expanded="isOpen.whatsOnDropdown">What's On</a>
             <ul v-if="isOpen.whatsOnDropdown" class="dropdown-menu">
-              <li><router-link to="/calendar-elderly" class="dropdown-item">Calendar for Elderly</router-link></li>
+              <li><router-link to="/ecalendar" class="dropdown-item">Calendar for Elderly</router-link></li>
               <li><router-link to="/registration" class="dropdown-item">Registration</router-link></li>
-              <li><router-link to="/calendar-volunteers" class="dropdown-item">Calendar for Volunteers</router-link></li>
+              <li><router-link to="/vcalendar" class="dropdown-item">Calendar for Volunteers</router-link></li>
             </ul>
           </li>
 

@@ -81,7 +81,11 @@
 <script setup>
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
-import bcrypt from 'bcryptjs';
+import { db } from '../../src/firebase/init'; // Import Firebase Auth and Firestore
+import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth';
+import { doc, setDoc } from 'firebase/firestore';
+
+const auth = getAuth();
 
 const formData = ref({
   username: '',
@@ -98,16 +102,29 @@ const errors = ref({
   password: null, 
   email: null,
 });
-///submits the form after all validation and testing has been passed
-const submitForm = () => {
+
+const submitForm = async () => {
   validateUser(true);
   validatePassword(true);
   validateEmail(true);
 
   if (!errors.value.username && !errors.value.password && !errors.value.email && !errors.value.error) {
-    saveUser(formData.value.username, formData.value.password, formData.value.email, formData.value.role);
-    if (!errors.value.error) {
-      router.push("/about");
+    try {
+      // Create user with email and password
+      const userCredential = await createUserWithEmailAndPassword(auth, formData.value.email, formData.value.password);
+      const user = userCredential.user;
+
+      // Store additional user information in Firestore
+      await setDoc(doc(db, "users", user.uid), {
+        username: formData.value.username,
+        email: formData.value.email,
+        role: formData.value.role
+      });
+
+      router.push("/about"); // Navigate to another page after successful signup
+    } catch (error) {
+      console.error("Sign up failed:", error.message);
+      errors.value.error = `Sign up failed: ${error.message}`;
     }
   } else {
     errors.value.error = "Please fix the errors in the fields before signing up";
@@ -136,7 +153,7 @@ const validatePassword = (blur) => {
   const password = formData.value.password;
   const minLength = 8;
   const hasUppercase = /[A-Z]/.test(password);
-  const hasLowercase = /[a-z]/.test(password); // Fixed regex for lowercase
+  const hasLowercase = /[a-z]/.test(password);
   const hasNumber = /\d/.test(password);
   const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
 
@@ -152,23 +169,6 @@ const validatePassword = (blur) => {
     if (blur) errors.value.password = "Password must contain at least one special character.";
   } else {
     errors.value.password = null;
-  }
-};
-//check whether the user exists and then create their account
-const saveUser = (username, password, email, role) => {
-  const users = JSON.parse(localStorage.getItem('users')) || [];
-  const findUser = users.find(user => user.username === username);
-  const userEmail = users.find(user => user.email === email);
-
-  if (findUser) {
-    errors.value.error = "The username is already in use";
-  } else if (userEmail) {
-    errors.value.error = "The email is already in use";
-  } else {
-    password = bcrypt.hashSync(password, 11);
-    users.push({ username, password, email, role });
-    localStorage.setItem('users', JSON.stringify(users));
-    errors.value.error = null; // Clear any previous errors
   }
 };
 </script>

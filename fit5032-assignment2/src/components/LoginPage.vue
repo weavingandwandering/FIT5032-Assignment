@@ -1,130 +1,103 @@
 <template>
-    <div class="login container">
-      <h1 class="text-center my-4">Login Page</h1>
-      <form @submit.prevent="submitForm" class="p-4 border rounded">
-        <div class="mb-3">
-          <label for="username" class="form-label">Username:</label>
-          <input
-            type="text"
-            class="form-control"
-            id="username"
-            placeholder="Enter your username"
-          v-model="formData.username"/>
-         
-        </div>
-  
-        <div class="mb-3">
-          <label for="password" class="form-label">Password:</label>
-          <input
-            type="password"
-            class="form-control"
-            id="password"
-            placeholder="Enter your password"
-          v-model="formData.password"/>
-         
-        </div>
-  
-        <button type="submit" class="btn btn-primary w-100">Login</button>
-        
-      </form>
-        <a href="#/signup" id="signup" class="btn btn-link p-0" @click="signForm">Sign up Here</a>
+  <div class="login container">
+    <h1 class="text-center my-4">Login Page</h1>
+    <form @submit.prevent="submitForm" class="p-4 border rounded">
+      <div class="mb-3">
+        <label for="email" class="form-label">Email:</label>
+        <input
+          type="email"
+          class="form-control"
+          id="email"
+          placeholder="Enter your email"
+          v-model="formData.email"
+        />
+      </div>
 
-        <div v-if="!isAuthenticated.result" class="text-danger"> {{error.error}} </div>
-        
-    </div>
-  </template>
-  
-  <script setup>
+      <div class="mb-3">
+        <label for="password" class="form-label">Password:</label>
+        <input
+          type="password"
+          class="form-control"
+          id="password"
+          placeholder="Enter your password"
+          v-model="formData.password"
+        />
+      </div>
 
-    import { ref } from 'vue';
-    import { useRouter } from 'vue-router'
-    import bcrypt from 'bcryptjs';
+      <button type="submit" class="btn btn-primary w-100">Login</button>
+    </form>
 
-    const formData = ref({
-        username: '',
-        password: '',
-    });
+    <a href="#/signup" id="signup" class="btn btn-link p-0" @click="signForm">Sign up Here</a>
 
+    <div v-if="error" class="text-danger">{{ error }}</div>
+  </div>
+</template>
 
-    const router = useRouter()
+<script setup>
+import { ref } from 'vue';
+import { useRouter } from 'vue-router';
+import { getAuth, signInWithEmailAndPassword } from 'firebase/auth';
+import { getFirestore, doc, getDoc } from 'firebase/firestore';
 
+const auth = getAuth();
+const db = getFirestore();
 
-    const error = ref({
-        error: null
-    })
-    //leads to sign up
-    const signForm = () => {
-        router.push('./signup')
-    };
-    //submits the form after validation
-    const submitForm = () => {
-        authenticateUser(formData.value.username, formData.value.password);
-        if(isAuthenticated.value.result === true){
-            router.push("/about")
-        } else{
-            error.value.error = "The username or password do not match our records."
-        }
+const formData = ref({
+  email: '',
+  password: '',
+});
 
-       
-    };
+const error = ref(null);
+const router = useRouter();
 
-    
-    const isAuthenticated = ref({result: false});
- 
-    //checks whether the account exists
-   
-    const authenticateUser = (username, password) => {
-      const users = JSON.parse(localStorage.getItem('users')) || [];
-      console.log("Users", users);
-  
+const signForm = () => {
+  router.push('/signup');
+};
 
-      const findUser = users.find(user => user.username === username && bcrypt.compareSync(password, user.password));
-      if(findUser){
-        isAuthenticated.value.result = true;
-        localStorage.setItem('currentUser', username);
-        console.log("current user", localStorage.getItem('currentUser'));
-      } else{
-        isAuthenticated.value.result = false;
-        
-      }
+const submitForm = async () => {
+  try {
+    const userCredential = await signInWithEmailAndPassword(auth, formData.value.email, formData.value.password);
+    const user = userCredential.user;
 
+    // Fetch the user's document from Firestore
+    const userDoc = await getDoc(doc(db, 'users', user.uid));
+
+    if (userDoc.exists()) {
+      const userData = userDoc.data();
+      localStorage.setItem('currentUser', userData.username);
     }
-    
-  // No script needed for now
-  </script>
-  
-  <style scoped>
-  
-  @media (min-width: 576px) {
-    .form-label {
+
+    router.push('/about');
+  } catch (err) {
+    error.value = 'Invalid email or password';
+  }
+};
+</script>
+
+<style scoped>
+/* Media queries for form responsiveness */
+@media (min-width: 576px) {
+  .form-label {
     font-size: 18px;
     padding: 20px;
   }
-  
-
 }
 
 @media (min-width: 768px) {
   .form-label {
     font-size: 20px;
   }
-  
-
 }
 
 @media (min-width: 992px) {
   .form-label {
     font-size: 22px;
   }
-
 }
 
 @media (min-width: 1400px) {
   .form-label {
     font-size: 24px;
   }
-  
 }
-  </style>
-  
-  
+</style>
