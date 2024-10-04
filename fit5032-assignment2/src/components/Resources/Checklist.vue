@@ -1,214 +1,153 @@
 <template>
-  <div class="container my-5">
-    <h1 class="text-center mb-4">Checklist & Reminder</h1>
-
-    <!-- Checklist Section -->
-    <div class="card p-4">
-      <h3 class="mb-3">Checklist</h3>
-      <ul class="list-group">
-        <li
-          v-for="(task, index) in tasks"
-          :key="index"
-          class="list-group-item d-flex justify-content-between align-items-center"
-        >
-          <div>
-            <input
-              type="checkbox"
-              v-model="task.completed"
-              class="form-check-input me-2"
-              @change="saveTasks"
-            />
-            <span :class="{ 'text-decoration-line-through': task.completed }">
-              {{ task.name }}
-            </span>
-          </div>
-          <button class="btn btn-danger btn-sm" @click="removeTask(index)">
-            Remove
-          </button>
-        </li>
-      </ul>
-
-      <div class="input-group mt-3">
+  <div class="reminder container">
+    <h1 class="text-center my-4">Set a Reminder</h1>
+    <form @submit.prevent="submitReminder" class="p-4 border rounded">
+      <div class="mb-3">
+        <label for="email" class="form-label">Email:</label>
         <input
-          type="text"
-          v-model="newTask"
-          placeholder="New task"
+          type="email"
           class="form-control"
+          id="email"
+          v-model="formData.email"
+          readonly
         />
-        <button class="btn btn-primary" @click="addTask">Add Task</button>
       </div>
-    </div>
 
-    <!-- Reminder Section -->
-    <div class="card p-4 mt-4">
-      <h3 class="mb-3">Set Reminder</h3>
-      <form @submit.prevent="sendReminder">
-        <div class="mb-3">
-          <label for="email" class="form-label">Email Address:</label>
-          <input
-            type="email"
-            id="email"
-            v-model="email"
-            class="form-control"
-            placeholder="Enter email"
-            required
-          />
-        </div>
+      <div class="mb-3">
+        <label for="reminderMessage" class="form-label">Reminder Message:</label>
+        <textarea
+          class="form-control"
+          id="reminderMessage"
+          placeholder="Enter your reminder message"
+          v-model="formData.message"
+          rows="3"
+        ></textarea>
+      </div>
 
-        <div class="mb-3">
-          <label for="message" class="form-label">Reminder Message:</label>
-          <textarea
-            id="message"
-            v-model="reminderMessage"
-            class="form-control"
-            rows="3"
-            placeholder="Enter your reminder message"
-            required
-          ></textarea>
-        </div>
+      <div class="mb-3">
+        <label for="reminderDate" class="form-label">Reminder Date and Time:</label>
+        <input
+          type="datetime-local"
+          class="form-control"
+          id="reminderDate"
+          v-model="formData.reminderDate"
+        />
+      </div>
 
-        <div class="mb-3">
-          <label for="dateTime" class="form-label">Select Date and Time:</label>
-          <input
-            type="datetime-local"
-            id="dateTime"
-            v-model="dateTime"
-            class="form-control"
-            required
-          />
-        </div>
+      <button type="submit" class="btn btn-primary w-100">Set Reminder</button>
+    </form>
 
-        <div class="mb-3">
-          <label for="attachment" class="form-label">Attach a File:</label>
-          <input
-            type="file"
-            id="attachment"
-            @change="handleFileUpload"
-            class="form-control"
-          />
-        </div>
-
-        <button type="submit" class="btn btn-success w-100">Send Reminder</button>
-      </form>
-    </div>
-
-    <!-- Error Message -->
-    <div v-if="error" class="alert alert-danger mt-3">{{ error }}</div>
-
-    <!-- Success Message -->
-    <div v-if="success" class="alert alert-success mt-3">{{ success }}</div>
+    <div v-if="successMessage" class="text-success">{{ successMessage }}</div>
+    <div v-if="error" class="text-danger">{{ error }}</div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref } from 'vue';
 import axios from 'axios';
+import { getFirestore, collection, query, where, getDocs } from 'firebase/firestore';
 
-const tasks = ref([]);
-const newTask = ref('');
-const email = ref('');
-const reminderMessage = ref('');
-const dateTime = ref(''); // Added for date and time
+const db = getFirestore();
+const formData = ref({
+  email: '',
+  message: '',
+  reminderDate: '',
+});
 const error = ref(null);
-const success = ref(null);
-const selectedFile = ref(null); // For storing the uploaded file
+const successMessage = ref(null);
 
-// Load saved tasks from localStorage
-onMounted(() => {
-  const savedTasks = localStorage.getItem('tasks');
-  if (savedTasks) {
-    tasks.value = JSON.parse(savedTasks);
-  }
-});
-
-// Save tasks to localStorage
-const saveTasks = () => {
-  localStorage.setItem('tasks', JSON.stringify(tasks.value));
-};
-
-// Add a new task
-const addTask = () => {
-  if (newTask.value.trim()) {
-    tasks.value.push({ name: newTask.value, completed: false });
-    newTask.value = '';
-    saveTasks();
-  }
-};
-
-// Remove a task
-const removeTask = (index) => {
-  tasks.value.splice(index, 1);
-  saveTasks();
-};
-
-// Handle file upload
-const handleFileUpload = (event) => {
-  selectedFile.value = event.target.files[0]; // Store the selected file
-};
-
-// Send reminder using Firebase Cloud Function
-const sendReminder = async () => {
-  error.value = null;
-  success.value = null;
-  console.log({
-  email: email.value,
-  message: reminderMessage.value,
-  dateTime: dateTime.value,
-});
-
-  const formData = new FormData(); // Create a FormData object to handle file upload
-  formData.append('email', email.value);
-  formData.append('message', reminderMessage.value);
-  formData.append('dateTime', dateTime.value);
-  if (selectedFile.value) {
-    formData.append('attachment', selectedFile.value); // Append the file to FormData
-  }
-
+// Fetch the current user's email from Firestore
+const fetchEmail = async () => {
   try {
-    const response = await axios.post('https://sendemail-z6ewzryaea-uc.a.run.app', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
+    const usernameFromLocalStorage = localStorage.getItem('currentUser'); // Get username from localStorage
+    if (usernameFromLocalStorage) {
+      const usersCollection = collection(db, 'users');
+      const q = query(usersCollection, where('username', '==', usernameFromLocalStorage));
+      const querySnapshot = await getDocs(q);
 
-    if (response.status === 200) {
-      success.value = "Reminder scheduled successfully!";
-      // Clear the input fields after successful submission
-      email.value = '';
-      reminderMessage.value = '';
-      dateTime.value = '';
-      selectedFile.value = null; // Reset file input
+      if (!querySnapshot.empty) {
+        const userData = querySnapshot.docs[0].data();
+        formData.value.email = userData.email; 
+      } else {
+        error.value = 'User not found in the database';
+      }
     } else {
-      error.value = "Failed to schedule reminder.";
+      error.value = 'No user logged in';
     }
   } catch (err) {
-    error.value = "Error sending reminder: " + err.message;
+    error.value = 'Error fetching user data';
   }
 };
+
+
+// Submit reminder function
+const submitReminder = async () => {
+  try {
+    const currentTime = new Date();
+    const reminderTime = new Date(formData.value.reminderDate);
+
+    // Check if the reminder is in the future
+    if (reminderTime <= currentTime) {
+      error.value = 'The reminder date must be in the future';
+      return;
+    }
+    // Debugging: Log the local and UTC times
+    console.log('Current Local Time:', currentTime);
+    console.log('Input Reminder Local Time:', reminderTime);
+
+    // Call the Firebase Cloud Function to schedule the email
+    const response = await axios.post(
+      'https://australia-southeast1-ishita-assignment3.cloudfunctions.net/scheduleEmail', // Update to your Cloud Function URL
+      {
+        email: formData.value.email,
+        message: formData.value.message,
+        sendAt: reminderTime.toISOString(), // Send in ISO format
+      }
+    );
+
+    if (response.status === 200) {
+      successMessage.value = 'Reminder set and email will be sent at the specified time.';
+      error.value = null;
+    }
+  } catch (err) {
+    console.error(err); // Log the error for debugging
+    error.value = 'Failed to set the reminder';
+  }
+};
+
+
+
+
+// Fetch the email when the component mounts
+fetchEmail();
 </script>
 
 <style scoped>
-h1 {
-  font-size: 2.5rem;
-  font-weight: bold;
+/* Styling */
+.reminder {
+  max-width: 600px;
+  margin: auto;
 }
 
-.card {
-  border-radius: 10px;
-  box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+.form-label {
+  font-size: 16px;
 }
 
-.list-group-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+@media (min-width: 768px) {
+  .form-label {
+    font-size: 18px;
+  }
 }
 
-input[type="checkbox"] {
-  cursor: pointer;
+@media (min-width: 992px) {
+  .form-label {
+    font-size: 20px;
+  }
 }
 
-.text-decoration-line-through {
-  text-decoration: line-through;
+@media (min-width: 1200px) {
+  .form-label {
+    font-size: 22px;
+  }
 }
 </style>
