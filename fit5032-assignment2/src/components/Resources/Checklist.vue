@@ -67,6 +67,27 @@
           ></textarea>
         </div>
 
+        <div class="mb-3">
+          <label for="dateTime" class="form-label">Select Date and Time:</label>
+          <input
+            type="datetime-local"
+            id="dateTime"
+            v-model="dateTime"
+            class="form-control"
+            required
+          />
+        </div>
+
+        <div class="mb-3">
+          <label for="attachment" class="form-label">Attach a File:</label>
+          <input
+            type="file"
+            id="attachment"
+            @change="handleFileUpload"
+            class="form-control"
+          />
+        </div>
+
         <button type="submit" class="btn btn-success w-100">Send Reminder</button>
       </form>
     </div>
@@ -87,8 +108,10 @@ const tasks = ref([]);
 const newTask = ref('');
 const email = ref('');
 const reminderMessage = ref('');
+const dateTime = ref(''); // Added for date and time
 const error = ref(null);
 const success = ref(null);
+const selectedFile = ref(null); // For storing the uploaded file
 
 // Load saved tasks from localStorage
 onMounted(() => {
@@ -118,21 +141,45 @@ const removeTask = (index) => {
   saveTasks();
 };
 
+// Handle file upload
+const handleFileUpload = (event) => {
+  selectedFile.value = event.target.files[0]; // Store the selected file
+};
+
 // Send reminder using Firebase Cloud Function
 const sendReminder = async () => {
   error.value = null;
   success.value = null;
+  console.log({
+  email: email.value,
+  message: reminderMessage.value,
+  dateTime: dateTime.value,
+});
+
+  const formData = new FormData(); // Create a FormData object to handle file upload
+  formData.append('email', email.value);
+  formData.append('message', reminderMessage.value);
+  formData.append('dateTime', dateTime.value);
+  if (selectedFile.value) {
+    formData.append('attachment', selectedFile.value); // Append the file to FormData
+  }
 
   try {
-    const response = await axios.post('https://sendemail-z6ewzryaea-uc.a.run.app', {
-      email: email.value,
-      message: reminderMessage.value,
+    const response = await axios.post('https://sendemail-z6ewzryaea-uc.a.run.app', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
     });
 
     if (response.status === 200) {
-      success.value = "Reminder sent successfully!";
+      success.value = "Reminder scheduled successfully!";
+      // Clear the input fields after successful submission
+      email.value = '';
+      reminderMessage.value = '';
+      dateTime.value = '';
+      selectedFile.value = null; // Reset file input
     } else {
-      error.value = "Failed to send reminder.";
+      error.value = "Failed to schedule reminder.";
     }
   } catch (err) {
     error.value = "Error sending reminder: " + err.message;
