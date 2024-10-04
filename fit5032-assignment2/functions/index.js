@@ -7,7 +7,6 @@ firebaseAdmin.initializeApp();
 const corsMiddleware = cors({origin: true});
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
-
 exports.scheduleEmail = functions
     .region("australia-southeast1")
     .https.onRequest((req, res) => {
@@ -16,8 +15,7 @@ exports.scheduleEmail = functions
           return res.status(405).send("Method Not Allowed");
         }
 
-        const {email, message, sendAt} = req.body;
-
+        const {email, message, sendAt, attachments} = req.body;
 
         const dater = new Date(sendAt);
         if (isNaN(dater.getTime())) {
@@ -25,10 +23,12 @@ exports.scheduleEmail = functions
         }
         const sendT=firebaseAdmin.firestore.Timestamp.fromDate(new Date(dater));
 
+        // Prepare the email object to store in Firestore
         const sEmail = {
           email,
           message,
           sendAt: sendT,
+          attachments: attachments || [], // Store the attachments if they exist
         };
 
         try {
@@ -62,7 +62,7 @@ exports.sendEmailsHttp = functions
         }
 
         const emailPromises = snapshot.docs.map(async (doc) => {
-          const {email, message} = doc.data();
+          const {email, message, attachments} = doc.data();
           console.log(`Preparing to send email`);
 
           const msg = {
@@ -70,6 +70,12 @@ exports.sendEmailsHttp = functions
             from: "ishitagupta224@gmail.com",
             subject: "Scheduled Reminder",
             text: message,
+            attachments: attachments.map((file) => ({
+              content: file.content, // Base64 content of the file
+              filename: file.filename, // Name of the file
+              type: file.type, // MIME type of the file
+              disposition: "attachment",
+            })),
           };
 
           try {

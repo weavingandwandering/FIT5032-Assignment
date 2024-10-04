@@ -33,6 +33,16 @@
           v-model="formData.reminderDate"
         />
       </div>
+      <div class="mb-3">
+        <label for="attachment" class="form-label">Attachment:</label>
+        <input
+          type="file"
+          class="form-control"
+          id="attachment"
+          @change="handleFileUpload"
+          multiple
+        />
+      </div>
 
       <button type="submit" class="btn btn-primary w-100">Set Reminder</button>
     </form>
@@ -55,14 +65,15 @@ const formData = ref({
 });
 const error = ref(null);
 const successMessage = ref(null);
+const files = ref([]); // New ref for storing file attachments
 
 // Fetch the current user's email from Firestore
 const fetchEmail = async () => {
   try {
-    const usernameFromLocalStorage = localStorage.getItem('currentUser'); // Get username from localStorage
+    const usernameFromLocalStorage = localStorage.getItem('currentUser');
     if (usernameFromLocalStorage) {
-      const usersCollection = collection(db, 'users');
-      const q = query(usersCollection, where('username', '==', usernameFromLocalStorage));
+      const usersC = collection(db, 'users');
+      const q = query(usersC, where('username','==',usernameFromLocalStorage));
       const querySnapshot = await getDocs(q);
 
       if (!querySnapshot.empty) {
@@ -79,6 +90,10 @@ const fetchEmail = async () => {
   }
 };
 
+// Handle file upload
+const handleFileUpload = (event) => {
+  files.value = Array.from(event.target.files);
+};
 
 // Submit reminder function
 const submitReminder = async () => {
@@ -91,17 +106,42 @@ const submitReminder = async () => {
       error.value = 'The reminder date must be in the future';
       return;
     }
-    // Debugging: Log the local and UTC times
-    console.log('Current Local Time:', currentTime);
-    console.log('Input Reminder Local Time:', reminderTime);
+
+    const formDataForSubmission = {
+      email: formData.value.email,
+      message: formData.value.message,
+      sendAt: reminderTime.toISOString(),
+      attachments: []
+    };
+
+    // Append files to the formDataForSubmission
+    for (const file of files.value) {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = async () => {
+        const base64String = reader.result.split(',')[1]; 
+        formDataForSubmission.attachments.push({
+          content: base64String,
+          filename: file.name,
+          type: file.type
+        });
+      };
+      // Wait for the file to be read before proceeding
+      await new Promise((resolve) => {
+        reader.onloadend = () => {
+          resolve();
+        };
+      });
+    }
 
     // Call the Firebase Cloud Function to schedule the email
     const response = await axios.post(
-      'https://australia-southeast1-ishita-assignment3.cloudfunctions.net/scheduleEmail', // Update to your Cloud Function URL
+      'https://australia-southeast1-ishita-assignment3.cloudfunctions.net/scheduleEmail',
+      formDataForSubmission,
       {
-        email: formData.value.email,
-        message: formData.value.message,
-        sendAt: reminderTime.toISOString(), // Send in ISO format
+        headers: {
+          'Content-Type': 'application/json', // Set content type to JSON
+        },
       }
     );
 
@@ -110,17 +150,16 @@ const submitReminder = async () => {
       error.value = null;
     }
   } catch (err) {
-    console.error(err); // Log the error for debugging
+    console.error(err);
     error.value = 'Failed to set the reminder';
   }
 };
 
 
-
-
 // Fetch the email when the component mounts
 fetchEmail();
 </script>
+
 
 <style scoped>
 /* Styling */
