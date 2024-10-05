@@ -78,7 +78,6 @@
     checkRating();
   });
 
-  //checks whether the user has already rated this post
   const checkRating = () => {
     const postID = route.params.id;
     const currUser = localStorage.getItem('currentUser');
@@ -87,12 +86,14 @@
         const userRated = JSON.parse(localStorage.getItem('userRating')) || [];
         const findUserRating = userRated.find((userRate) => userRate.username === currUser);
         console.log(findUserRating);
+        if (findUserRating){
         if (findUserRating.posts.includes(postID)) {
           hasRatedthePost.value.post = true;
           hasRatedthePost.value.display = "The user has already rated this post";
           console.log("HEYY");
         
         }
+      }
       };
 
   }
@@ -106,12 +107,10 @@
     
     const findUserRating = userRated.find((userRate) => userRate.username === currUser);
     const postID = route.params.id;
-    //checks whether there is an existing rate for that post
     if (!findUserRating) {
         console.log("Rating received:");
         
         const ratings = JSON.parse(localStorage.getItem('rating')) || [];
-        
         let findRating = ratings.find((rating) => rating.id === postID);
         
         if (findRating) {
@@ -127,7 +126,6 @@
         userRated.push(findUser);
         
         localStorage.setItem('userRating', JSON.stringify(userRated));
-        
         console.log("Updated ratings:", ratings);
     } else {
         const hasRatedPost = findUserRating.posts.includes(postID);
