@@ -55,11 +55,15 @@
           <li class="nav-item" v-if="currentUser === null">
             <router-link to="/login" class="nav-link" active-class="active">Login</router-link>
           </li>
-            <div class="d-flex flex-column align-items-end">
-              <p class="text-success ms-3 mb-0">Logged in as</p>
-              <h6 class="fw-bold text-dark ms-3">{{ currentUser }}</h6>
+          <li v-else class="nav-item">
+            <div class="d-flex align-items-center">
+              <div>
+                <p class="text-success mb-0">Logged in as</p>
+                <h6 class="fw-bold text-dark mb-0">{{ currentUser }}</h6>
+              </div>
+              <button class="btn btn-outline-success ms-3" @click="logout">Log Out</button>
             </div>
-            <button class="btn btn-outline-success ms-3" @click="logout">Log Out</button>
+          </li>
         </ul>
       </div>
     </div>
