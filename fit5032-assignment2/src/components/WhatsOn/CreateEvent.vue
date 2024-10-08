@@ -18,6 +18,19 @@
           <label for="eventDescription" class="form-label">Event Description</label>
           <textarea v-model="newEvent.description" id="eventDescription" class="form-control" required></textarea>
         </div>
+        <div class="mb-3">
+          <label for="eventLocation" class="form-label">Event Location</label>
+          <input v-model="newEvent.location" id="eventLocation" type="text" class="form-control" placeholder="Search for a place..." required @input="handleInput" />
+          <div v-if="predictions.length" class="suggestions">
+            <ul>
+              <li v-for="(prediction, index) in predictions" :key="index" @click="selectPlace(prediction)">{{ prediction.description }}</li>
+            </ul>
+          </div>
+        </div>
+        <div class="mb-3">
+          <label for="eventOrganizer" class="form-label">Organizer Name</label>
+          <input id="eventOrganizer" type="text" class="form-control" :value="userName" readonly />
+        </div>
         <button type="submit" class="btn btn-primary">Create Event</button>
       </form>
     </div>
@@ -32,6 +45,8 @@
               Date: {{ event.date.toDate().toLocaleDateString() }}
             </h6>
             <p class="card-text">{{ event.description }}</p>
+            <p class="card-text">Location: {{ event.location }}</p>
+            <p class="card-text">Organizer: {{ event.organizer }}</p>
           </div>
         </div>
       </div>
@@ -43,6 +58,7 @@
 import { ref, onMounted } from 'vue';
 import { getFirestore, collection, addDoc, getDocs, Timestamp } from 'firebase/firestore';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
+import { Loader } from '@googlemaps/js-api-loader';
 
 // Initialize Firestore and Auth
 const db = getFirestore();
@@ -50,8 +66,11 @@ const auth = getAuth();
 
 // Reactive state for event data
 const events = ref([]);
-const newEvent = ref({ name: '', date: '', description: '' });
+const newEvent = ref({ name: '', date: '', description: '', location: '', organizer: '' });
 const isVolunteer = ref(false);
+const userName = ref(''); // Store the user's name
+const predictions = ref([]); // To store place predictions
+let autocompleteService = null;
 
 // Fetch events from Firestore
 const fetchEvents = async () => {
@@ -66,31 +85,65 @@ const fetchEvents = async () => {
 // Create a new event in Firestore
 const createEvent = async () => {
   try {
-    // Convert the date to Firestore Timestamp before saving
     const eventDate = Timestamp.fromDate(new Date(newEvent.value.date));
     await addDoc(collection(db, 'events'), {
       name: newEvent.value.name,
-      date: eventDate, // Save the event date as a Firestore Timestamp
-      description: newEvent.value.description
+      date: eventDate,
+      description: newEvent.value.description,
+      location: newEvent.value.location,
+      organizer: userName.value
     });
-    newEvent.value = { name: '', date: '', description: '' }; // Clear form
+    newEvent.value = { name: '', date: '', description: '', location: '', organizer: '' };
+    predictions.value = []; // Clear predictions
     fetchEvents(); // Refresh the event list
   } catch (error) {
     console.error('Error adding event:', error);
   }
 };
 
-// Check user role to determine if the user is a volunteer
+// Check user role and get user's name
 onMounted(() => {
   onAuthStateChanged(auth, (user) => {
     if (user) {
-      // You can check user role here based on Firestore user document
-      // Set isVolunteer to true if the user is a volunteer
+      userName.value = user.displayName || user.email;
       isVolunteer.value = true; // Mocked for now, implement actual check
       fetchEvents();
     }
   });
+
+  // Load Google Places API
+  const loader = new Loader({
+    apiKey: import.meta.env.VITE_PLACES_API_KEY, 
+    libraries: ['places']
+  });
+  loader.load().then(() => {
+    autocompleteService = new google.maps.places.AutocompleteService();
+  });
 });
+
+// Handle input for location search
+const handleInput = (event) => {
+  const input = event.target.value;
+
+  if (input.length < 3) {
+    predictions.value = []; // Clear predictions if input is less than 3 characters
+    return;
+  }
+
+  autocompleteService.getPlacePredictions({ input }, (results, status) => {
+    if (status === google.maps.places.PlacesServiceStatus.OK) {
+      predictions.value = results; // Set predictions
+    } else {
+      predictions.value = []; // Clear predictions on error
+    }
+  });
+};
+
+// Select a place from predictions
+const selectPlace = (place) => {
+  newEvent.value.location = place.description; // Set the location input to the selected place
+  predictions.value = []; // Clear predictions
+};
 </script>
 
 <style scoped>
@@ -104,5 +157,28 @@ onMounted(() => {
   padding: 10px;
   border: 1px solid #ddd;
   border-radius: 5px;
+}
+
+.suggestions {
+  border: 1px solid #ddd;
+  background: white;
+  position: absolute;
+  z-index: 1000;
+  width: calc(100% - 2rem);
+}
+
+.suggestions ul {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+}
+
+.suggestions li {
+  padding: 8px;
+  cursor: pointer;
+}
+
+.suggestions li:hover {
+  background-color: #f0f0f0;
 }
 </style>
