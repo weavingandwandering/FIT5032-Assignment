@@ -39,6 +39,7 @@
               <li><router-link to="/ecalendar" class="dropdown-item">Calendar for Elderly</router-link></li>
               <li><router-link to="/registration" class="dropdown-item">Registration</router-link></li>
               <li><router-link to="/vcalendar" class="dropdown-item">Calendar for Volunteers</router-link></li>
+              <li><router-link to="/eventcreate" class="dropdown-item">Host an Event</router-link></li>
             </ul>
           </li>
 

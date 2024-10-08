@@ -14,6 +14,7 @@ import Checklist from '../components/Resources/Checklist.vue'
 import Chatbot from '@/components/Community/Chatbot.vue'
 import Donation from '../components/GetInvolved/Donation.vue'
 import Volunteering from '../components/GetInvolved/Volunteering.vue'
+import CreateEvent from '@/components/WhatsOn/CreateEvent.vue'
 
 
 
@@ -56,29 +57,15 @@ const routes = [
 {
   path: '/ecalendar',
   component: ECalendar,
-  beforeEnter: (to, from, next) => {
-    const currUser = localStorage.getItem('currentUser');
-    const currRole = getRole(currUser);
-    if (currRole == "Elderly") {
-      next();
-    } else {
-      next('/vcalendar'); 
-    }
-  }
+  name: 'ECalendar'
+  
 },
 
 {
   path: '/vcalendar',
-  component: VCalendar,
-  beforeEnter: (to, from, next) => {
-    const currUser = localStorage.getItem('currentUser');
-    const currRole = getRole(currUser);
-    if (currRole == "Volunteer") {
-      next();
-    } else {
-      next('/ecalendar'); // Redirect to login if not authenticated
-    }
-  }
+  name: 'VCalendar',
+  component: VCalendar
+
 },
 {
   path: '/videos',
@@ -92,23 +79,28 @@ const routes = [
 }, 
 {
   path: '/health-checklist', 
-  name: Checklist, 
+  name: 'Checklist', 
   component: Checklist
 }, 
 {
   path: '/chatbot', 
-  name: Chatbot, 
+  name: 'Chatbot', 
   component: Chatbot
 }, 
 {
   path: '/donation', 
-  name: Donation, 
+  name: 'Donation', 
   component: Donation
 }, 
 {
   path: '/volunteering', 
-  name: Volunteering, 
+  name: 'Volunteering', 
   component: Volunteering
+}, 
+{
+  path: '/eventcreate', 
+  name: 'CreateEvent', 
+  component: CreateEvent,
 }, 
 
 ]
