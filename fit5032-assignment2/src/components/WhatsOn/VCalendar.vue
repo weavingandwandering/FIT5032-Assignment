@@ -22,7 +22,7 @@
     <div v-if="viewMode === 'calendar'">
       <FullCalendar 
         :options="calendarOptions" 
-        @eventClick="handleEventClick" />
+         />
     </div>
 
     <!-- List View -->
@@ -65,11 +65,7 @@ export default {
     const viewMode = ref('list'); // Set initial view mode to 'list'
     const router = useRouter();
 
-    const calendarOptions = ref({
-      plugins: [dayGridPlugin, interactionPlugin],
-      initialView: 'dayGridMonth',
-      events: [],
-    });
+    
 
     const filteredEvents = computed(() => {
       // Add sorting and filtering logic if necessary
@@ -99,12 +95,24 @@ export default {
     };
 
     const handleEventClick = (info) => {
-      const eventId = info.event.extendedProps.id;
-      goToEventDetails(eventId);
+      console.log("Clicked on event:", info); // This should log the info object
+      if (info && info.event) {
+        const eventId = info.event.id; 
+        goToEventDetails(eventId);
+      } else {
+        console.log("Event info is missing");
+      }
     };
 
+    const calendarOptions = ref({
+      plugins: [dayGridPlugin, interactionPlugin],
+      initialView: 'dayGridMonth',
+      events: [],
+      eventClick: handleEventClick,
+    });
+
     const goToEventDetails = (eventId) => {
-      router.push({ name: 'EventDetails', params: { id: eventId } });
+      router.push({ name: 'ViewEvent', params: { id: eventId } });
     };
 
     onMounted(() => {

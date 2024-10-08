@@ -15,6 +15,7 @@ import Chatbot from '@/components/Community/Chatbot.vue'
 import Donation from '../components/GetInvolved/Donation.vue'
 import Volunteering from '../components/GetInvolved/Volunteering.vue'
 import CreateEvent from '@/components/WhatsOn/CreateEvent.vue'
+import ViewEvent from '@/components/WhatsOn/ViewEvent.vue'
 
 
 
@@ -102,7 +103,11 @@ const routes = [
   name: 'CreateEvent', 
   component: CreateEvent,
 }, 
-
+{
+  path: '/viewevent:id',
+  name: 'ViewEvent',
+  component: ViewEvent
+}, 
 ]
 
 const router = createRouter({
