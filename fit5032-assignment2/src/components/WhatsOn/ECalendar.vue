@@ -71,8 +71,9 @@ const initMap = () => {
     });
 
     const geocoder = new google.maps.Geocoder();
-
-    markers.forEach(marker => marker.setMap(null)); // Clear existing markers
+    
+    // Clear existing markers
+    markers.forEach(marker => marker.setMap(null)); 
     markers.length = 0; // Reset the markers array
 
     events.value.forEach(event => {

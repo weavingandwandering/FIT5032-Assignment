@@ -25,7 +25,18 @@
       </div>
 
       <div class="mb-3">
-        <label for="reminderDate" class="form-label">Reminder Date and Time:</label>
+        <label for="reminderTime" class="form-label">Select Reminder Time:</label>
+        <select class="form-control" id="reminderTime" v-model="selectedTime">
+          <option value="">Choose Time</option>
+          <option value="15">In 15 minutes</option>
+          <option value="30">In 30 minutes</option>
+          <option value="60">In 1 hour</option>
+          <option value="custom">Pick a Custom Time</option>
+        </select>
+      </div>
+
+      <div class="mb-3" v-if="selectedTime === 'custom'">
+        <label for="reminderDate" class="form-label">Custom Date and Time:</label>
         <input
           type="datetime-local"
           class="form-control"
@@ -65,7 +76,8 @@ const formData = ref({
 });
 const error = ref(null);
 const successMessage = ref(null);
-const files = ref([]); // New ref for storing file attachments
+const files = ref([]); 
+const selectedTime = ref('');
 
 // Fetch the current user's email from Firestore
 const fetchEmail = async () => {
@@ -99,7 +111,14 @@ const handleFileUpload = (event) => {
 const submitReminder = async () => {
   try {
     const currentTime = new Date();
-    const reminderTime = new Date(formData.value.reminderDate);
+    let reminderTime;
+    if (selectedTime.value === 'custom') {
+      reminderTime = new Date(formData.value.reminderDate);
+    } else {
+      const currentTime = new Date();
+      reminderTime = new Date(currentTime.getTime() + selectedTime.value * 60000);
+    }
+
 
     // Check if the reminder is in the future
     if (reminderTime <= currentTime) {
@@ -162,14 +181,44 @@ fetchEmail();
 
 
 <style scoped>
-/* Styling */
+
 .reminder {
   max-width: 600px;
   margin: auto;
+  font-size: 18px; 
 }
 
 .form-label {
-  font-size: 16px;
+  font-size: 20px; 
+}
+
+input, textarea {
+  font-size: 18px;
+  padding: 12px;
+}
+
+.btn {
+  font-size: 20px;
+  padding: 15px;
+}
+
+.form-control {
+  background-color: #f0f0f0;
+  border: 1px solid #d3d3d3;
+  color: #333;
+}
+
+
+h1, label {
+  color: #333;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.text-success, .text-danger {
+  font-size: 18px; 
 }
 
 @media (min-width: 768px) {
@@ -190,3 +239,5 @@ fetchEmail();
   }
 }
 </style>
+
+
