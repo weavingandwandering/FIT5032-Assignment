@@ -44,6 +44,7 @@
           v-model="formData.reminderDate"
         />
       </div>
+
       <div class="mb-3">
         <label for="attachment" class="form-label">Attachment:</label>
         <input
@@ -64,7 +65,8 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
+import { useRoute } from 'vue-router';
 import axios from 'axios';
 import { getFirestore, collection, query, where, getDocs } from 'firebase/firestore';
 
@@ -76,21 +78,21 @@ const formData = ref({
 });
 const error = ref(null);
 const successMessage = ref(null);
-const files = ref([]); 
+const files = ref([]);
 const selectedTime = ref('');
+const route = useRoute(); // Initialize route
 
-// Fetch the current user's email from Firestore
 const fetchEmail = async () => {
   try {
     const usernameFromLocalStorage = localStorage.getItem('currentUser');
     if (usernameFromLocalStorage) {
       const usersC = collection(db, 'users');
-      const q = query(usersC, where('username','==',usernameFromLocalStorage));
+      const q = query(usersC, where('username', '==', usernameFromLocalStorage));
       const querySnapshot = await getDocs(q);
 
       if (!querySnapshot.empty) {
         const userData = querySnapshot.docs[0].data();
-        formData.value.email = userData.email; 
+        formData.value.email = userData.email;
       } else {
         error.value = 'User not found in the database';
       }
@@ -102,12 +104,10 @@ const fetchEmail = async () => {
   }
 };
 
-// Handle file upload
 const handleFileUpload = (event) => {
   files.value = Array.from(event.target.files);
 };
 
-// Submit reminder function
 const submitReminder = async () => {
   try {
     const currentTime = new Date();
@@ -115,12 +115,9 @@ const submitReminder = async () => {
     if (selectedTime.value === 'custom') {
       reminderTime = new Date(formData.value.reminderDate);
     } else {
-      const currentTime = new Date();
       reminderTime = new Date(currentTime.getTime() + selectedTime.value * 60000);
     }
 
-
-    // Check if the reminder is in the future
     if (reminderTime <= currentTime) {
       error.value = 'The reminder date must be in the future';
       return;
@@ -133,19 +130,17 @@ const submitReminder = async () => {
       attachments: []
     };
 
-    // Append files to the formDataForSubmission
     for (const file of files.value) {
       const reader = new FileReader();
       reader.readAsDataURL(file);
       reader.onload = async () => {
-        const base64String = reader.result.split(',')[1]; 
+        const base64String = reader.result.split(',')[1];
         formDataForSubmission.attachments.push({
           content: base64String,
           filename: file.name,
           type: file.type
         });
       };
-      // Wait for the file to be read before proceeding
       await new Promise((resolve) => {
         reader.onloadend = () => {
           resolve();
@@ -153,13 +148,12 @@ const submitReminder = async () => {
       });
     }
 
-    // Call the Firebase Cloud Function to schedule the email
     const response = await axios.post(
       'https://australia-southeast1-ishita-assignment3.cloudfunctions.net/scheduleEmail',
       formDataForSubmission,
       {
         headers: {
-          'Content-Type': 'application/json', // Set content type to JSON
+          'Content-Type': 'application/json',
         },
       }
     );
@@ -174,22 +168,23 @@ const submitReminder = async () => {
   }
 };
 
-
-// Fetch the email when the component mounts
-fetchEmail();
+onMounted(() => {
+  fetchEmail();
+  if (route.query.message) {
+    formData.value.message = route.query.message; 
+  }
+});
 </script>
 
-
 <style scoped>
-
 .reminder {
   max-width: 600px;
   margin: auto;
-  font-size: 18px; 
+  font-size: 18px;
 }
 
 .form-label {
-  font-size: 20px; 
+  font-size: 20px;
 }
 
 input, textarea {
@@ -208,7 +203,6 @@ input, textarea {
   color: #333;
 }
 
-
 h1, label {
   color: #333;
 }
@@ -218,7 +212,7 @@ h1, label {
 }
 
 .text-success, .text-danger {
-  font-size: 18px; 
+  font-size: 18px;
 }
 
 @media (min-width: 768px) {
@@ -239,5 +233,3 @@ h1, label {
   }
 }
 </style>
-
-
