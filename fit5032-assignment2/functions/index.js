@@ -100,6 +100,7 @@ exports.chatbotAPI = functions
       corsMiddleware(req, res, async () => {
         try {
           const userMessage = req.body.message;
+          const standard = "Give the entire reponse in one line";
 
           const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${functions.config().gemini.key}`;
 
@@ -108,7 +109,7 @@ exports.chatbotAPI = functions
               {
                 parts: [
                   {
-                    text: userMessage,
+                    text: userMessage + standard,
                   },
                 ],
               },
@@ -130,11 +131,7 @@ exports.chatbotAPI = functions
 
       const extractBotReply = (data) => {
         if (data && data.candidates && data.candidates.length > 0) {
-          const can = data.candidates[0];
-          console.log(can);
-          if (can.content && can.content.parts && can.content.parts.length>0) {
-            return can.content.parts[0].text;
-          }
+          return data.candidates;
         }
         return "Sorry, I could not understand your request.";
       };

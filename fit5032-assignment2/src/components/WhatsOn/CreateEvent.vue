@@ -60,29 +60,25 @@ import { getFirestore, collection, addDoc, getDocs, Timestamp } from 'firebase/f
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { Loader } from '@googlemaps/js-api-loader';
 
-// Initialize Firestore and Auth
 const db = getFirestore();
 const auth = getAuth();
 
-// Reactive state for event data
 const events = ref([]);
 const newEvent = ref({ name: '', date: '', description: '', location: '', organizer: '' });
 const isVolunteer = ref(false);
-const userName = ref(''); // Store the user's name
-const predictions = ref([]); // To store place predictions
+const userName = ref(''); 
+const predictions = ref([]); 
 let autocompleteService = null;
 
-// Fetch events from Firestore
 const fetchEvents = async () => {
   const querySnapshot = await getDocs(collection(db, 'events'));
   events.value = querySnapshot.docs.map(doc => ({
     id: doc.id,
     ...doc.data(),
-    date: doc.data().date // Firestore Timestamp format
+    date: doc.data().date 
   }));
 };
 
-// Create a new event in Firestore
 const createEvent = async () => {
   try {
     const eventDate = Timestamp.fromDate(new Date(newEvent.value.date));
@@ -94,24 +90,22 @@ const createEvent = async () => {
       organizer: userName.value
     });
     newEvent.value = { name: '', date: '', description: '', location: '', organizer: '' };
-    predictions.value = []; // Clear predictions
-    fetchEvents(); // Refresh the event list
+    predictions.value = []; 
+    fetchEvents(); 
   } catch (error) {
     console.error('Error adding event:', error);
   }
 };
 
-// Check user role and get user's name
 onMounted(() => {
   onAuthStateChanged(auth, (user) => {
     if (user) {
       userName.value = user.displayName || user.email;
-      isVolunteer.value = true; // Mocked for now, implement actual check
+      isVolunteer.value = true; 
       fetchEvents();
     }
   });
 
-  // Load Google Places API
   const loader = new Loader({
     apiKey: import.meta.env.VITE_PLACES_API_KEY, 
     libraries: ['places']
@@ -121,28 +115,26 @@ onMounted(() => {
   });
 });
 
-// Handle input for location search
 const handleInput = (event) => {
   const input = event.target.value;
 
   if (input.length < 3) {
-    predictions.value = []; // Clear predictions if input is less than 3 characters
+    predictions.value = []; 
     return;
   }
 
   autocompleteService.getPlacePredictions({ input }, (results, status) => {
     if (status === google.maps.places.PlacesServiceStatus.OK) {
-      predictions.value = results; // Set predictions
+      predictions.value = results; 
     } else {
-      predictions.value = []; // Clear predictions on error
+      predictions.value = []; 
     }
   });
 };
 
-// Select a place from predictions
 const selectPlace = (place) => {
-  newEvent.value.location = place.description; // Set the location input to the selected place
-  predictions.value = []; // Clear predictions
+  newEvent.value.location = place.description;
+  predictions.value = [];
 };
 </script>
 

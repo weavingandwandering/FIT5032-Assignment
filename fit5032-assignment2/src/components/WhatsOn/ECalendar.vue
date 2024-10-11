@@ -72,9 +72,8 @@ const initMap = () => {
 
     const geocoder = new google.maps.Geocoder();
     
-    // Clear existing markers
     markers.forEach(marker => marker.setMap(null)); 
-    markers.length = 0; // Reset the markers array
+    markers.length = 0; 
 
     events.value.forEach(event => {
       geocoder.geocode({ address: event.location }, (results, status) => {
@@ -87,7 +86,7 @@ const initMap = () => {
             title: event.name,
           });
 
-          markers.push(eventMarker); // Store the marker
+          markers.push(eventMarker); 
 
           const infoWindow = new google.maps.InfoWindow();
 
