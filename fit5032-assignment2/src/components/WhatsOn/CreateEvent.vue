@@ -87,7 +87,8 @@ const createEvent = async () => {
       date: eventDate,
       description: newEvent.value.description,
       location: newEvent.value.location,
-      organizer: userName.value
+      organizer: userName.value,
+      attendees: [],
     });
     newEvent.value = { name: '', date: '', description: '', location: '', organizer: '' };
     predictions.value = []; 

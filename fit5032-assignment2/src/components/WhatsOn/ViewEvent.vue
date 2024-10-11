@@ -1,13 +1,37 @@
 <template>
   <div class="container my-4">
-    <h2>{{ event ? event.name : 'Loading...' }}</h2>
-    <p>Date: {{ event && event.date ? event.date.toDate().toLocaleDateString() : 'Loading...' }}</p>
-    <p>{{ event ? event.description : 'Loading...' }}</p>
-    <p>Location: {{ event ? event.location : 'Loading...' }}</p>
-    
-    <div id="map" style="height: 400px; width: 80%;"></div>
-    <div v-if="distance">
-      <p>Distance to current location: {{ distance }}</p>
+    <div class="row">
+      <div class="col-md-6">
+        <div class="card bg-light mb-3">
+          <div class="card-body">
+            <h2 class="card-title text-primary">{{ event ? event.name : 'Loading...' }}</h2>
+            <p class="card-text">
+              <strong>Date:</strong> <span class="text-muted">{{ event && event.date ? event.date.toDate().toLocaleDateString() : 'Loading...' }}</span>
+            </p>
+            <p class="card-text">
+              <strong>Description:</strong> <span class="text-muted">{{ event ? event.description : 'Loading...' }}</span>
+            </p>
+            <p class="card-text">
+              <strong>Location:</strong> <span class="text-muted">{{ event ? event.location : 'Loading...' }}</span>
+            </p>
+            <div v-if="distance">
+              <p class="mt-2">
+                <strong>Distance to current location:</strong> <span class="text-muted">{{ distance }}</span>
+              </p>
+            </div>
+            <button class="btn btn-primary mt-4" @click="register">Register for Event</button>
+            <div v-if="registrationSuccess" class="alert alert-success mt-2">
+              Registration successful! Thank you for signing up.
+            </div>
+            <div v-if="registrationError" class="alert alert-danger mt-2">
+              An error occurred while registering. Please try again.
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div id="map" style="height: 400px; width: 100%; border: 2px solid #17a2b8;"></div>
+      </div>
     </div>
   </div>
 </template>
@@ -15,13 +39,15 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
-import { getFirestore, doc, getDoc } from 'firebase/firestore';
+import { getFirestore, doc, getDoc, updateDoc, arrayUnion } from 'firebase/firestore';
 import { Loader } from '@googlemaps/js-api-loader';
 
 const PLACES_API_KEY = import.meta.env.VITE_PLACES_API_KEY;
 const db = getFirestore();
 const event = ref(null);
 const distance = ref(null);
+const registrationSuccess = ref(false);
+const registrationError = ref(false);
 const route = useRoute();
 const eventId = route.params.id;
 
@@ -29,7 +55,6 @@ const fetchEventDetails = async () => {
   try {
     const eventRef = doc(db, 'events', eventId);
     const eventSnap = await getDoc(eventRef);
-
     if (eventSnap.exists()) {
       event.value = {
         id: eventSnap.id,
@@ -106,18 +131,35 @@ const calculateDistance = (eventLocation) => {
   }
 };
 
+const register = async () => {
+  try {
+    const eventRef = doc(db, 'events', eventId);
+    await updateDoc(eventRef, {
+      attendees: arrayUnion({ name: 'Your Name', email: 'your-email@example.com' })
+    });
+    registrationSuccess.value = true;
+    registrationError.value = false;
+  } catch (error) {
+    registrationError.value = true;
+    registrationSuccess.value = false;
+    console.error('Error registering for event:', error);
+  }
+};
+
 onMounted(() => {
   fetchEventDetails();
 });
 </script>
 
 <style scoped>
-.container {
-  max-width: 800px;
-  margin: 0 auto;
+.card {
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  border-radius: 0.5rem;
 }
+
 #map {
   height: 400px;
   width: 100%;
+  border-radius: 0.5rem;
 }
 </style>
