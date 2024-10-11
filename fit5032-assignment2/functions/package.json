@@ -18,6 +18,7 @@
     "date-fns-tz": "^3.2.0",
     "firebase-admin": "^12.1.0",
     "firebase-functions": "^5.0.0",
+    "stripe": "^17.2.0",
     "vue": "^3.5.11",
     "vue-router": "^4.4.5"
   },

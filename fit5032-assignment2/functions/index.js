@@ -136,3 +136,37 @@ exports.chatbotAPI = functions
         return "Sorry, I could not understand your request.";
       };
     });
+
+const stripe = require("stripe")(functions.config().stripe.key);
+
+exports.processDonation = functions
+    .region("australia-southeast1")
+    .https.onRequest((req, res) => {
+      corsMiddleware(req, res, async () => {
+        if (req.method !== "POST") {
+          return res.status(405).send("Method Not Allowed");
+        }
+
+        const {amount} = req.body;
+        const currency = "aud";
+        const source = "tok_visa";
+        const description = "Donation";
+        if (!amount || !currency || !source) {
+          return res.status(400).send("Invalid request parameters");
+        }
+
+        try {
+          const charge = await stripe.charges.create({
+            amount,
+            currency,
+            source,
+            description,
+          });
+
+          return res.status(200).json({success: true, charge});
+        } catch (error) {
+          console.error("Stripe charge failed:", error);
+          return res.status(500).json({success: false, error: error.message});
+        }
+      });
+    });
