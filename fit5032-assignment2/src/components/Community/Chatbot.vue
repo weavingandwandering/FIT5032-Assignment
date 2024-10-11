@@ -1,117 +1,101 @@
 <template>
-    <div class="chatbot">
-      <div class="chat-window">
-        <div v-for="(message, index) in messages" :key="index" class="message">
-          <p :class="{'user-message': message.isUser, 'bot-message': !message.isUser}">
-            {{ message.text }}
-          </p>
+  <div class="chatbot container mt-4">
+    <div class="chat-window card">
+      <div class="card-body chat-messages">
+        <div v-for="(message, index) in messages" :key="index" class="message mb-3">
+          <div class="d-flex" :class="{'justify-content-end': message.isUser, 'justify-content-start': !message.isUser}">
+            <p :class="{'user-message': message.isUser, 'bot-message': !message.isUser, 'p-2': true, 'rounded': true}">
+              {{ message.text }}
+            </p>
+          </div>
         </div>
       </div>
-      <input v-model="userMessage" @keyup.enter="sendMessage" placeholder="Type your message..." />
-      <button @click="sendMessage">Send</button>
+      <div class="card-footer">
+        <div class="input-group">
+          <input
+            v-model="userMessage"
+            @keyup.enter="sendMessage"
+            placeholder="Type your message..."
+            class="form-control"
+          />
+          <button @click="sendMessage" class="btn btn-primary">Send</button>
+        </div>
+        <div class="mt-3">
+          <p>Try one of these prompts:</p>
+          <div class="btn-group">
+            <button @click="setPrompt('What’s the weather today?')" class="btn btn-outline-secondary">Weather</button>
+            <button @click="setPrompt('Tell me a joke!')" class="btn btn-outline-secondary">Joke</button>
+            <button @click="setPrompt('Give me some advice.')" class="btn btn-outline-secondary">Advice</button>
+          </div>
+        </div>
+      </div>
     </div>
-  </template>
-  
-  <script setup>
-  import { ref } from 'vue';
-  import axios from 'axios';
-  
-  const userMessage = ref('');
-  const messages = ref([]);
-  const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
-  console.log(GEMINI_API_KEY)
+  </div>
+</template>
 
-  
-  // Function to send a message to the chatbot API
-  const sendMessage = async () => {
+<script setup>
+import { ref } from 'vue';
+import axios from 'axios';
+
+const userMessage = ref('');
+const messages = ref([]);
+
+const cloudFunctionUrl = 'https://australia-southeast1-ishita-assignment3.cloudfunctions.net/chatbotAPI';
+
+const setPrompt = (text) => {
+  userMessage.value = text;
+};
+
+const sendMessage = async () => {
   try {
     if (!userMessage.value) {
-      console.warn('Empty message sent');
-      return; // Prevent unnecessary API calls for empty messages
+      return;
     }
-    console.log(userMessage.value);
-    
-    // Construct the API URL with the environment variable
-    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_API_KEY}`;
 
-    // Prepare the data structure according to the curl command
-    const requestData = {
-      contents: [
-        {
-          parts: [
-            {
-              text: userMessage.value,
-            },
-          ],
-        },
-      ],
-    };
+    const response = await axios.post(cloudFunctionUrl, { message: userMessage.value });
 
-    // Make the API request
-    const response = await axios.post(apiUrl, requestData, {
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+    const botReply = response.data.reply;
 
-    // Extract the bot's reply from the API response
-    const botReply = extractBotReply(response.data);
-    
-    // Add messages to the list
     messages.value.push({ text: userMessage.value, isUser: true });
     messages.value.push({ text: botReply, isUser: false });
-
+    console.log(botReply)
     userMessage.value = '';
   } catch (error) {
-    console.error('Error sending message:', error);
     messages.value.push({ text: 'An error occurred while sending your message.', isUser: false });
   }
 };
+</script>
 
-// Function to extract the bot reply from the API response
-const extractBotReply = (data) => {
-  // Check if the response structure is as expected
-  if (data && data.candidates && data.candidates.length > 0) {
-    const candidate = data.candidates[0];
-    if (candidate.content && candidate.content.parts && candidate.content.parts.length > 0) {
-      return candidate.content.parts[0].text;
-    }
-  }
-  return 'Sorry, I could not understand your request.';
-};
+<style scoped>
+.chat-window {
+  max-width: 600px;
+  margin: 0 auto;
+}
 
-  </script>
-  
-  <style scoped>
-  .chatbot {
-    width: 400px;
-    margin: 0 auto;
-  }
-  .chat-window {
-    border: 1px solid #ccc;
-    padding: 10px;
-    height: 300px;
-    overflow-y: scroll;
-  }
-  .message {
-    margin-bottom: 10px;
-  }
-  .user-message {
-    text-align: right;
-    background-color: #e1ffc7;
-  }
-  .bot-message {
-    text-align: left;
-    background-color: #f1f1f1;
-  }
-  input {
-    width: calc(100% - 20px);
-    padding: 10px;
-    margin-top: 10px;
-  }
-  button {
-    padding: 10px;
-    width: 100%;
-  }
-  </style>
-  
+.chat-messages {
+  height: 300px;
+  overflow-y: auto;
+  padding: 15px;
+  background-color: #f9f9f9;
+}
+
+.user-message {
+  background-color: #d1ffd6;
+  text-align: right;
+  max-width: 75%;
+}
+
+.bot-message {
+  background-color: #e0e0e0;
+  text-align: left;
+  max-width: 75%;
+}
+
+input {
+  margin-right: 10px;
+}
+
+button {
+  width: 100px;
+}
+</style>

@@ -2,6 +2,7 @@ const functions = require("firebase-functions");
 const sgMail = require("@sendgrid/mail");
 const firebaseAdmin = require("firebase-admin");
 const cors = require("cors");
+const axios = require("axios");
 
 firebaseAdmin.initializeApp();
 const corsMiddleware = cors({origin: true});
@@ -90,4 +91,51 @@ exports.sendEmailsHttp = functions
         await Promise.all(emailPromises);
         res.status(200).send("Scheduled emails processed successfully!");
       });
+    });
+
+
+exports.chatbotAPI = functions
+    .region("australia-southeast1")
+    .https.onRequest((req, res) => {
+      corsMiddleware(req, res, async () => {
+        try {
+          const userMessage = req.body.message;
+
+          const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${functions.config().gemini.key}`;
+
+          const requestData = {
+            contents: [
+              {
+                parts: [
+                  {
+                    text: userMessage,
+                  },
+                ],
+              },
+            ],
+          };
+
+          const response = await axios.post(apiUrl, requestData, {
+            headers: {
+              "Content-Type": "application/json",
+            },
+          });
+
+          const botReply = extractBotReply(response.data);
+          return res.status(200).send({reply: botReply});
+        } catch (error) {
+          return res.status(500).send("Error processing the request.");
+        }
+      });
+
+      const extractBotReply = (data) => {
+        if (data && data.candidates && data.candidates.length > 0) {
+          const can = data.candidates[0];
+          console.log(can);
+          if (can.content && can.content.parts && can.content.parts.length>0) {
+            return can.content.parts[0].text;
+          }
+        }
+        return "Sorry, I could not understand your request.";
+      };
     });
