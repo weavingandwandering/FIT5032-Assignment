@@ -1,0 +1,8 @@
+name = "fit5032-assignment2"
+type = "javascript"
+
+account_id = "your-account-id"
+workers_dev = true
+compatibility_date = "2024-10-12"
+
+build = { command = "npm run build", cwd = "Assignment-1/fit5032-assignment-2" }
