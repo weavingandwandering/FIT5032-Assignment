@@ -1,6 +1,6 @@
 <template>
   <div class="container mt-4">
-    <div class="card">
+    <div class="card post-card">
       <div class="card-header">
         <h3>{{ post.title }}</h3>
       </div>
@@ -16,14 +16,16 @@
               :increment="0.5"
               star-size="24"
               v-model="ratingValue"
+              aria-label="Rate this post"
             />
+            <span class="rating-value" role="alert">{{ ratingValue }}</span>
           </div>
 
-          <div v-else class="text-danger">
+          <div v-else class="text-danger" role="alert">
             {{ hasRatedthePost.display }}
           </div>
         </div>
-        <router-link to="/forum" class="btn btn-primary">Back to Forum</router-link>
+        <router-link to="/forum" class="btn btn-primary" role="button">Back to Forum</router-link>
       </div>
     </div>
   </div>
@@ -140,16 +142,50 @@ const setRating = async (ratingValue) => {
 
 <style scoped>
 .container {
-  max-width: 800px;
+  max-width: 900px;
   margin: 0 auto;
 }
 
+.post-card {
+  background-color: #f1f1f1;
+  border: 1px solid #dcdcdc;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
 .card-header {
-  background-color: #f8f9fa;
-  border-bottom: 1px solid #e9ecef;
+  background-color: #4CAF50;
+  color: white;
+  padding: 15px;
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
 }
 
 .card-body {
-  padding: 20px;
+  padding: 30px;
+  font-size: 1.1em;
+}
+
+.text-danger {
+  color: #b22222;
+}
+
+.star-rating {
+  color: #f39c12;
+}
+
+.btn-primary {
+  background-color: #007bff;
+  border-color: #007bff;
+}
+
+.btn-primary:focus, .btn-primary:hover {
+  background-color: #0056b3;
+  border-color: #004085;
+}
+
+.rating-value {
+  font-weight: bold;
+  margin-top: 10px;
 }
 </style>

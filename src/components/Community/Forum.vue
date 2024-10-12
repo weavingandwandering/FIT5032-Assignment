@@ -25,7 +25,7 @@
           <option value="title">Title</option>
           <option value="currentuser">Author</option>
           <option value="rating">Rating</option>
-          <option value="id">Post No</option>
+          <option value="postNumber">Post No</option>
         </select>
       </div>
     </div>
@@ -33,9 +33,9 @@
     <table class="table table-striped table-responsive-md">
       <thead class="thead-light">
         <tr>
-          <th scope="col" @click="sortTable('id')">Post No.</th>
+          <th scope="col" @click="sortTable('postNumber')">Post No.</th>
           <th scope="col" @click="sortTable('title')">Title</th>
-          <th scope="col" @click="sortTable('author')">Author</th>
+          <th scope="col" @click="sortTable('currentuser')">Author</th>
           <th scope="col" @click="sortTable('role')">Role</th>
           <th scope="col" @click="sortTable('averageRating')">Rating</th>
         </tr>
@@ -75,14 +75,14 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { getFirestore, collection, getDocs, query, where } from 'firebase/firestore'
+import { getFirestore, collection, getDocs, query, where, getDoc, doc } from 'firebase/firestore'
 
 const posts = ref([])
 const globalSearch = ref('')
-const searchColumn = ref('all') // Added column-specific search
-const sortBy = ref('')
+const searchColumn = ref('all')
+const sortBy = ref('id') // Set default sorting by 'id'
 const currentPage = ref(1)
 const rowsPerPage = 10
 const roles = ref({})
@@ -146,27 +146,34 @@ const filteredPosts = computed(() => {
     }
   }
 
-  if (sortBy.value) {
-    if (sortBy.value === 'rating') {
-      filtered.sort((a, b) => {
-        const value1 = getRating(a.id)
-        const value2 = getRating(b.id)
-        return value1[0] - value2[0] // Simplified sort for ratings
-      })
-    } else {
-      filtered.sort((a, b) => (a[sortBy.value] > b[sortBy.value] ? 1 : -1))
-    }
-  }
-
   return filtered
 })
 
+// Handle sorting separately
+const sortedPosts = computed(() => {
+  const sorted = [...filteredPosts.value] // Create a copy for sorting
+
+  if (sortBy.value) {
+    if (sortBy.value === 'rating') {
+      // You might want to implement a proper rating comparison
+      return sorted.sort((a, b) => {
+        const ratingA = getRating(a.id)
+        const ratingB = getRating(b.id)
+        return ratingB[0] - ratingA[0] // Sort by rating in descending order
+      })
+    } else {
+      return sorted.sort((a, b) => (b[sortBy.value] > a[sortBy.value] ? 1 : -1)); // Sort in descending order
+    }
+  }
+  return sorted;
+});
+
 const paginatedPosts = computed(() => {
   const start = (currentPage.value - 1) * rowsPerPage
-  return filteredPosts.value.slice(start, start + rowsPerPage)
+  return sortedPosts.value.slice(start, start + rowsPerPage)
 })
 
-const totalPages = computed(() => Math.ceil(filteredPosts.value.length / rowsPerPage))
+const totalPages = computed(() => Math.ceil(sortedPosts.value.length / rowsPerPage))
 
 const nextPage = () => {
   if (currentPage.value < totalPages.value) currentPage.value++
@@ -194,23 +201,25 @@ const getRole = async (usernameFromLocalStorage) => {
   }
 }
 
-const getRating = (postId) => {
+const getRating = async (postId) => {
   const ratingRef = collection(db, 'ratings')
-  return getDocs(query(ratingRef, where('postId', '==', postId))).then((snapshot) => {
-    if (!snapshot.empty) {
-      const ratingList = snapshot.docs[0].data().rating
-      const sum = ratingList.reduce((a, b) => a + b, 0)
-      const average = sum / ratingList.length
-      return [average.toFixed(2), ratingList.length]
-    }
-    return [0, 0]
-  })
+  console.log(postId)
+  const snapshot = await getDoc(doc(db, 'ratings', postId));  
+  console.log(snapshot)
+  if (!snapshot.empty) {
+    const ratingList = snapshot.data().rating;
+    const sum = ratingList.reduce((a, b) => a + b, 0);
+    const average = sum / ratingList.length;
+    return [average.toFixed(2), ratingList.length];
+  }
+  return [0, 0];
 }
 
 onMounted(() => {
   fetchPosts()
 })
 </script>
+
 
 <style scoped>
 .table {

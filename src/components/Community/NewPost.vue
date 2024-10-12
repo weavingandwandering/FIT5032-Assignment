@@ -3,11 +3,11 @@
     <div class="row justify-content-center">
       <div class="col-md-8">
         <div class="card">
-          <form @submit.prevent="submitForm" class="p-4 border rounded">
-            <div class="card-header">
+          <form @submit.prevent="submitPost" class="p-4 border rounded" aria-labelledby="formHeader">
+            <div class="card-header" id="formHeader">
               <h2>Create your New Post</h2>
             </div>
-            <div class="card-body">
+            <div class="card-body" :style="{ fontSize: textSize }">
               <div class="mb-3">
                 <label for="title" class="form-label">Title:</label>
                 <input
@@ -18,23 +18,27 @@
                   @blur="() => validateTitle(true)"
                   @input="() => validateTitle(false)"
                   v-model="formData.title"
+                  aria-required="true"
+                  aria-invalid="error.title !== null"
                 />
-                <div v-if="error.title" class="text-danger"> {{ error.title }} </div>
+                <div v-if="error.title" class="text-danger" role="alert">{{ error.title }}</div>
               </div>
               <div class="mb-3">
                 <label for="content" class="form-label">Content:</label>
                 <textarea
                   class="form-control"
                   id="content"
-                  rows="7"
+                  rows="10" 
                   placeholder="Type your post content here"
                   @blur="() => validateContent(true)"
                   @input="() => validateContent(false)"
                   v-model="formData.content"
+                  aria-required="true"
+                  aria-invalid="error.content !== null"
                 ></textarea>
-                <div v-if="error.content" class="text-danger"> {{ error.content }} </div>
+                <div v-if="error.content" class="text-danger" role="alert">{{ error.content }}</div>
               </div>
-              <button type="submit" class="btn btn-success w-100" @click="submitPost">Submit Post</button>
+              <button type="submit" class="btn btn-success w-100">Submit Post</button>
             </div>
           </form>
         </div>
@@ -46,7 +50,7 @@
 <script setup>
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
-import { getFirestore, collection, addDoc, serverTimestamp, doc, runTransaction } from 'firebase/firestore'; 
+import { getFirestore, collection, addDoc, serverTimestamp, doc, runTransaction } from 'firebase/firestore';
 
 const router = useRouter();
 const db = getFirestore();
@@ -60,6 +64,8 @@ const error = ref({
   title: null,
   content: null,
 });
+
+const textSize = ref('1rem');
 
 const submitPost = async () => {
   validateContent();
@@ -141,5 +147,26 @@ const validateContent = (blur) => {
 };
 </script>
 
-<style>
+<style scoped>
+.card {
+  border: 2px solid #007bff;
+}
+
+.card-header {
+  background-color: #007bff;
+  color: white;
+}
+
+.btn-success {
+  background-color: #4caf50;
+  border-color: #4caf50;
+}
+
+.text-danger {
+  color: #d9534f; 
+}
+
+.text-danger[role="alert"] {
+  background-color: rgba(217, 83, 79, 0.1);
+}
 </style>
