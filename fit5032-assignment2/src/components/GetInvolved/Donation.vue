@@ -67,7 +67,7 @@ You said:
 
 <script setup>
 import { ref, computed } from 'vue';
-import { getFirestore, collection, addDoc } from 'firebase/firestore';
+import { getFirestore, collection, addDoc, Timestamp } from 'firebase/firestore';
 import { useRouter } from 'vue-router';
 
 
@@ -133,7 +133,7 @@ const submitDonation = async () => {
         email: donor.value.email,
         amount: donor.value.amount,
         paymentMethod: donor.value.paymentMethod,
-        timestamp: new Date().toISOString(),
+        timestamp: Timestamp.now(),
       });
       
       donor.value = { name: '', email: '', amount: '', paymentMethod: '' }; 

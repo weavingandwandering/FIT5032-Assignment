@@ -49,6 +49,8 @@
             <ul v-if="isOpen.getInvolvedDropdown" class="dropdown-menu">
               <li><router-link to="/donation" class="dropdown-item">Donation</router-link></li>
               <li><router-link to="/volunteering" class="dropdown-item">Volunteering</router-link></li>
+              <li><router-link to="/statistics" class="dropdown-item">View Chart</router-link></li>
+
             </ul>
           </li>
 
