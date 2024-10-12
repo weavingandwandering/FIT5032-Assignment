@@ -11,7 +11,6 @@ import { useRouter } from 'vue-router';
 import { getFirestore, collection, getDocs } from 'firebase/firestore';
 import loader from './googleMapsLoader';
 
-const PLACES_API_KEY = import.meta.env.VITE_PLACES_API_KEY;
 const db = getFirestore();
 const router = useRouter();
 

@@ -58,7 +58,7 @@
 import { ref, onMounted } from 'vue';
 import { getFirestore, collection, addDoc, getDocs, Timestamp } from 'firebase/firestore';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
-import { Loader } from '@googlemaps/js-api-loader';
+import loader from './googleMapsLoader';
 
 const db = getFirestore();
 const auth = getAuth();
@@ -107,10 +107,6 @@ onMounted(() => {
     }
   });
 
-  const loader = new Loader({
-    apiKey: import.meta.env.VITE_PLACES_API_KEY, 
-    libraries: ['places']
-  });
   loader.load().then(() => {
     autocompleteService = new google.maps.places.AutocompleteService();
   });
