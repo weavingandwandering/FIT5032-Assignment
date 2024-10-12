@@ -37,12 +37,11 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { getFirestore, doc, getDoc, updateDoc, arrayUnion } from 'firebase/firestore';
-import { Loader } from '@googlemaps/js-api-loader';
+import loader from './googleMapsLoader';
 
-const PLACES_API_KEY = import.meta.env.VITE_PLACES_API_KEY;
 const db = getFirestore();
 const event = ref(null);
 const distance = ref(null);
@@ -72,11 +71,6 @@ const fetchEventDetails = async () => {
 const initMap = () => {
   if (!event.value || !event.value.location) return;
 
-  const loader = new Loader({
-    apiKey: PLACES_API_KEY,
-    libraries: ['places'],
-  });
-
   loader.load().then(() => {
     const geocoder = new google.maps.Geocoder();
     const eventLocation = event.value.location;
@@ -88,12 +82,14 @@ const initMap = () => {
           center: results[0].geometry.location,
         });
 
-        const marker = new google.maps.Marker({
+        new google.maps.Marker({
           position: results[0].geometry.location,
           map: map,
           title: event.value.name,
         });
 
+        // Get directions and calculate distance
+        getDirections(results[0].geometry.location, map);
         calculateDistance(results[0].geometry.location);
       } else {
         console.error('Geocode was not successful for the following reason: ' + status);
@@ -102,6 +98,34 @@ const initMap = () => {
   }).catch(e => {
     console.error('Error loading Google Maps:', e);
   });
+};
+
+const getDirections = (eventLocation, map) => {
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition((position) => {
+      const userLocation = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
+      const directionsService = new google.maps.DirectionsService();
+      const directionsRenderer = new google.maps.DirectionsRenderer();
+
+      directionsRenderer.setMap(map); // Set the map for the directions renderer
+
+      const request = {
+        origin: userLocation,
+        destination: eventLocation,
+        travelMode: 'DRIVING',
+      };
+
+      directionsService.route(request, (result, status) => {
+        if (status === 'OK') {
+          directionsRenderer.setDirections(result);
+        } else {
+          console.error('Directions request failed due to ' + status);
+        }
+      });
+    });
+  } else {
+    console.error('Geolocation is not supported by this browser.');
+  }
 };
 
 const calculateDistance = (eventLocation) => {
@@ -148,6 +172,12 @@ const register = async () => {
 
 onMounted(() => {
   fetchEventDetails();
+});
+
+watch(event, (newEvent) => {
+  if (newEvent) {
+    initMap(); 
+  }
 });
 </script>
 

@@ -7,9 +7,9 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
-import { getFirestore, collection, getDocs } from 'firebase/firestore';
-import { Loader } from '@googlemaps/js-api-loader';
 import { useRouter } from 'vue-router';
+import { getFirestore, collection, getDocs } from 'firebase/firestore';
+import loader from './googleMapsLoader';
 
 const PLACES_API_KEY = import.meta.env.VITE_PLACES_API_KEY;
 const db = getFirestore();
@@ -20,11 +20,7 @@ const nearbyEvents = ref([]);
 const userLocation = ref(null);
 const markers = [];
 
-// Load the Google Maps API once
-const loader = new Loader({
-  apiKey: PLACES_API_KEY,
-  libraries: ['places'],
-});
+
 
 const goToEventDetails = (eventId) => {
   router.push({ name: 'ViewEvent', params: { id: eventId } });
