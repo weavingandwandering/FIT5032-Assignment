@@ -17,6 +17,7 @@ import Volunteering from '../components/GetInvolved/Volunteering.vue'
 import CreateEvent from '@/components/WhatsOn/CreateEvent.vue'
 import ViewEvent from '@/components/WhatsOn/ViewEvent.vue'
 import Registration from '@/components/WhatsOn/Registration.vue'
+import Statistics from '@/components/GetInvolved/Statistics.vue'
 
 
 
@@ -113,6 +114,11 @@ const routes = [
   path: '/registration',
   name: 'Registration',
   component: Registration
+}, 
+{
+  path: '/statistics',
+  name: 'Statistcs',
+  component: Statistics
 }, 
 ]
 
