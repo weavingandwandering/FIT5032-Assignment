@@ -2,25 +2,34 @@
   <div class="reminder-list container">
     <h1 class="text-center my-4">Things to Remember</h1>
 
-    <div v-if="error" class="alert alert-danger text-center">{{ error }}</div>
+    <div v-if="error" class="alert alert-danger text-center" role="alert" aria-live="assertive">
+      {{ error }}
+    </div>
 
-    <ul class="list-group">
+    <ul class="list-group" role="list">
       <li
         v-for="(reminder, index) in sortedReminders"
         :key="reminder.id"
-        class="list-group-item d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-3"
+        class="list-group-item d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-3 reminder-item"
+        tabindex="0"
+        aria-labelledby="reminder-title-{{ reminder.id }}"
+        aria-describedby="reminder-message-{{ reminder.id }} reminder-status-{{ reminder.id }}"
       >
         <div class="reminder-info">
-          <h5 class="mb-1">{{ reminder.title }}</h5>
-          <p class="mb-1">{{ reminder.message }}</p>
-          <p class="mb-1 status">Status: <strong>{{ reminder.completed ? 'Completed' : 'Not Completed' }}</strong></p>
+          <h5 class="mb-1" id="reminder-title-{{ reminder.id }}">{{ reminder.title }}</h5>
+          <p class="mb-1" id="reminder-message-{{ reminder.id }}">{{ reminder.message }}</p>
+          <p class="mb-1 status" id="reminder-status-{{ reminder.id }}">
+            Status: <strong>{{ reminder.completed ? 'Completed' : 'Not Completed' }}</strong>
+          </p>
         </div>
 
-        <div class="actions mt-3 mt-md-0">
+        <div class="actions mt-3 mt-md-0" role="group" aria-label="Actions for this reminder">
           <button
             class="btn btn-success me-2"
             @click="markAsCompleted(reminder.id, true)"
             :disabled="reminder.completed"
+            aria-pressed="false"
+            :aria-disabled="reminder.completed"
           >
             Yes
           </button>
@@ -28,6 +37,8 @@
             class="btn btn-danger"
             @click="markAsCompleted(reminder.id, false)"
             :disabled="reminder.completed === false"
+            aria-pressed="false"
+            :aria-disabled="reminder.completed === false"
           >
             No
           </button>
@@ -35,8 +46,9 @@
           <button 
             class="btn btn-warning ms-2" 
             @click="setReminder(reminder.message)"
+            aria-label="Set reminder for {{ reminder.message }}"
           >
-            <i class="bi bi-bell"></i>
+            <i class="bi bi-bell" aria-hidden="true"></i>
           </button>
         </div>
       </li>
@@ -99,22 +111,67 @@ onMounted(fetchReminders);
   max-width: 900px;
   margin: auto;
   padding: 20px;
+  background-color: #fbfdff;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.reminder-item {
+  background-color: #ffffff;
+  border: 2px solid #fbdada;
+  transition: background-color 0.3s, transform 0.2s;
+}
+
+.reminder-item:hover {
+  background-color: #b2dcfa;
+  transform: scale(1.02);
 }
 
 .reminder-info h5 {
   font-weight: bold;
+  color: #333;
 }
 
 .reminder-info p {
   margin-bottom: 0.5rem;
+  color: #555;
 }
 
 .status {
   font-size: 0.9rem;
+  color: #777;
 }
 
 .actions button {
   min-width: 80px;
+  transition: background-color 0.3s;
+}
+
+.actions .btn-success {
+  background-color: #4caf50;
+  border-color: #4caf50;
+}
+
+.actions .btn-success:hover {
+  background-color: #45a049;
+}
+
+.actions .btn-danger {
+  background-color: #f44336;
+  border-color: #f44336;
+}
+
+.actions .btn-danger:hover {
+  background-color: #e53935;
+}
+
+.actions .btn-warning {
+  background-color: #ff9800;
+  border-color: #ff9800;
+}
+
+.actions .btn-warning:hover {
+  background-color: #fb8c00;
 }
 
 @media (max-width: 767.98px) {

@@ -1,7 +1,40 @@
 <template>
   <div class="container my-4">
-    <h2>Nearby Events</h2>
-    <div id="map" style="height: 400px;"></div>
+    <h2 class="text-center text-primary">Nearby Events</h2>
+    <div class="row">
+      <div class="col-md-8">
+        <div id="map" style="height: 400px;" aria-label="Map showing nearby events"></div>
+      </div>
+      <div class="col-md-4">
+        <h4 class="text-center text-secondary">Events Nearby</h4>
+        <div class="mb-3">
+          <label for="distanceSlider" class="form-label">Select Distance (km): <strong>{{ distance }} km</strong></label>
+          <input 
+            type="range" 
+            class="form-range" 
+            id="distanceSlider" 
+            v-model="distance" 
+            min="1" 
+            max="50" 
+            step="1" 
+            @input="updateNearbyEvents"
+            aria-label="Distance slider"
+          />
+        </div>
+        <ul class="list-group">
+          <li 
+            v-for="event in nearbyEvents" 
+            :key="event.id" 
+            class="list-group-item list-group-item-action"
+            @click="goToEventDetails(event.id)" 
+            style="cursor: pointer;"
+            aria-label="Event name"
+          >
+            {{ event.name }}
+          </li>
+        </ul>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -19,6 +52,7 @@ const nearbyEvents = ref([]);
 const userLocation = ref(null);
 const markers = [];
 let map = null;
+const distance = ref(1); 
 
 const goToEventDetails = (eventId) => {
   router.push({ name: 'ViewEvent', params: { id: eventId } });
@@ -70,83 +104,89 @@ const initMap = () => {
 
     const geocoder = new google.maps.Geocoder();
     
+    // Clear existing markers
     markers.forEach(marker => marker.setMap(null)); 
     markers.length = 0; 
+    nearbyEvents.value = []; // Clear previous nearby events
 
-    events.value.forEach(event => {
-      geocoder.geocode({ address: event.location }, (results, status) => {
-        if (status === 'OK' && results[0]) {
-          const eventLocation = results[0].geometry.location;
+    const distanceService = new google.maps.DistanceMatrixService();
+    const geocodePromises = events.value.map(event => {
+      return new Promise((resolve) => {
+        geocoder.geocode({ address: event.location }, (results, status) => {
+          if (status === 'OK' && results[0]) {
+            const eventLocation = results[0].geometry.location;
+            const eventMarker = new google.maps.Marker({
+              position: eventLocation,
+              map: map,
+              title: event.name,
+            });
 
-          const eventMarker = new google.maps.Marker({
-            position: eventLocation,
-            map: map,
-            title: event.name,
-          });
+            const infoWindow = new google.maps.InfoWindow();
+            eventMarker.addListener('click', () => {
+              infoWindow.setContent(`
+                <div>
+                  <h4>${event.name}</h4>
+                  <button id="event-${event.id}" type="button" class="btn btn-primary">View Event</button>
+                </div>
+              `);
+              infoWindow.open(map, eventMarker);
 
-          markers.push(eventMarker); 
-
-          const infoWindow = new google.maps.InfoWindow();
-
-          eventMarker.addListener('click', () => {
-            infoWindow.setContent(`
-              <div>
-                <h4>${event.name}</h4>
-                <p>${event.description}</p>
-                <p><strong>Location:</strong> ${event.location}</p>
-                <button id="event-${event.id}" type="button">View Event</button>
-              </div>
-            `);
-            infoWindow.open(map, eventMarker);
-
-            google.maps.event.addListenerOnce(infoWindow, 'domready', () => {
-              const button = document.getElementById(`event-${event.id}`);
-              button.addEventListener('click', () => {
-                goToEventDetails(event.id);
+              google.maps.event.addListenerOnce(infoWindow, 'domready', () => {
+                const button = document.getElementById(`event-${event.id}`);
+                button.addEventListener('click', () => {
+                  goToEventDetails(event.id);
+                });
               });
             });
-          });
 
-          const distanceService = new google.maps.DistanceMatrixService();
-          distanceService.getDistanceMatrix(
-            {
-              origins: [userLocation.value],
-              destinations: [eventLocation],
-              travelMode: 'DRIVING',
-            },
-            (response, status) => {
-              if (status === 'OK') {
-                const element = response.rows[0].elements[0];
-                if (element.status === 'OK' && element.distance.value / 1000 <= 50) {
-                  const distanceInKm = (element.distance.value / 1000).toFixed(2);
-                  nearbyEvents.value.push({
-                    ...event,
-                    distance: distanceInKm,
-                  });
+            // Calculate distance to user location
+            distanceService.getDistanceMatrix(
+              {
+                origins: [userLocation.value],
+                destinations: [eventLocation],
+                travelMode: 'DRIVING',
+              },
+              (response, status) => {
+                if (status === 'OK') {
+                  const element = response.rows[0].elements[0];
+                  const distanceInKm = element.distance.value / 1000;
+                  if (element.status === 'OK' && distanceInKm <= distance.value) {
+                    nearbyEvents.value.push({
+                      ...event,
+                      distance: distanceInKm.toFixed(2),
+                    });
+                  }
                 }
-              } else {
-                console.error('Error calculating distances:', status);
+                resolve();
               }
-            }
-          );
-        } else {
-          console.error('Geocode failed:', status);
-        }
+            );
+          } else {
+            console.error('Geocode failed:', status);
+            resolve();
+          }
+        });
       });
+    });
+
+    Promise.all(geocodePromises).then(() => {
     });
   });
 };
 
-// Fetch events and user location in parallel and wait for both to complete
 onMounted(async () => {
   try {
     await Promise.all([fetchEvents(), fetchUserLocation()]);
+    updateNearbyEvents(); 
   } catch (error) {
     console.error('Failed to fetch events or user location:', error);
   }
 });
 
-// Watch for changes in events and user location and reinitialize the map
+const updateNearbyEvents = () => {
+  nearbyEvents.value = []; 
+  initMap(); 
+};
+
 watch([events, userLocation], () => {
   if (userLocation.value && events.value.length) {
     initMap();
@@ -156,11 +196,36 @@ watch([events, userLocation], () => {
 
 <style scoped>
 .container {
-  max-width: 800px;
+  max-width: 1000px;
   margin: 0 auto;
+  background-color: #f8f9fa;
+  border-radius: 10px;
+  padding: 20px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
+
 #map {
   height: 400px;
   width: 100%;
+  border-radius: 10px;
+}
+
+.list-group-item {
+  cursor: pointer;
+  background-color: #fff;
+  border: 1px solid #ddd;
+  transition: background-color 0.3s ease;
+}
+
+.list-group-item:hover {
+  background-color: #e7f0ff; /* Light blue background on hover */
+}
+
+h2 {
+  margin-bottom: 20px;
+}
+
+h4 {
+  margin-top: 20px;
 }
 </style>

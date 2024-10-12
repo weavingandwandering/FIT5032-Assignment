@@ -1,61 +1,114 @@
-Share
-
-
-You said:
 <template>
   <div class="container my-4 d-flex justify-content-center">
     <div class="card" style="width: 100%; max-width: 400px;">
       <div class="card-body">
         <h2 class="text-center mb-4">Donate Now</h2>
-        <form @submit.prevent="openModal">
+        <form @submit.prevent="openModal" aria-labelledby="donateForm">
           <div class="mb-3">
             <label for="donorName" class="form-label">Name</label>
-            <input v-model="donor.name" type="text" id="donorName" class="form-control" required />
+            <input
+              v-model="donor.name"
+              type="text"
+              id="donorName"
+              class="form-control"
+              required
+              aria-label="Donor Name"
+            />
           </div>
           <div class="mb-3">
             <label for="donorEmail" class="form-label">Email</label>
-            <input v-model="donor.email" type="email" id="donorEmail" class="form-control" required />
+            <input
+              v-model="donor.email"
+              type="email"
+              id="donorEmail"
+              class="form-control"
+              required
+              aria-label="Donor Email"
+            />
           </div>
           <div class="mb-3">
             <label for="donationAmount" class="form-label">Donation Amount</label>
-            <input v-model="donor.amount" type="number" id="donationAmount" class="form-control" required min="1" />
+            <input
+              v-model="donor.amount"
+              type="number"
+              id="donationAmount"
+              class="form-control"
+              required
+              min="1"
+              aria-label="Donation Amount"
+            />
           </div>
           <div class="mb-3">
             <label for="paymentMethod" class="form-label">Payment Method</label>
-            <select v-model="donor.paymentMethod" id="paymentMethod" class="form-select" required>
+            <select
+              v-model="donor.paymentMethod"
+              id="paymentMethod"
+              class="form-select"
+              required
+              aria-label="Payment Method"
+            >
               <option value="" disabled>Select payment method</option>
               <option value="credit_card">Credit Card</option>
               <option value="paypal">PayPal</option>
             </select>
           </div>
-          <button type="submit" class="btn btn-primary w-100" :disabled="!isPaymentMethodValid">Donate</button>
+          <button
+            type="submit"
+            class="btn btn-primary w-100"
+            :disabled="!isPaymentMethodValid"
+            aria-label="Donate"
+          >
+            Donate
+          </button>
         </form>
         <div v-if="message" class="alert mt-3" :class="alertClass">{{ message }}</div>
       </div>
     </div>
 
-    <div class="modal" tabindex="-1" v-if="showModal">
+    <div class="modal" tabindex="-1" v-if="showModal" role="dialog" aria-labelledby="modalTitle" aria-modal="true">
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title">Credit Card Details</h5>
-            <button type="button" class="btn-close" @click="closeModal"></button>
+            <h5 id="modalTitle" class="modal-title">Credit Card Details</h5>
+            <button type="button" class="btn-close" @click="closeModal" aria-label="Close modal"></button>
           </div>
           <div class="modal-body">
-            <form @submit.prevent="submitDonation">
+            <form @submit.prevent="submitDonation" aria-labelledby="modalTitle">
               <div class="mb-3">
                 <label for="cardNumber" class="form-label">Card Number</label>
-                <input v-model="creditCard.number" type="text" id="cardNumber" class="form-control" required />
+                <input
+                  v-model="creditCard.number"
+                  type="text"
+                  id="cardNumber"
+                  class="form-control"
+                  required
+                  aria-label="Card Number"
+                />
               </div>
               <div class="mb-3">
                 <label for="cardExpiry" class="form-label">Expiry Date (MM/YY)</label>
-                <input v-model="creditCard.expiry" type="text" id="cardExpiry" class="form-control" required placeholder="MM/YY" />
+                <input
+                  v-model="creditCard.expiry"
+                  type="text"
+                  id="cardExpiry"
+                  class="form-control"
+                  required
+                  placeholder="MM/YY"
+                  aria-label="Card Expiry Date"
+                />
               </div>
               <div class="mb-3">
                 <label for="cardCVC" class="form-label">CVC</label>
-                <input v-model="creditCard.cvc" type="text" id="cardCVC" class="form-control" required />
+                <input
+                  v-model="creditCard.cvc"
+                  type="text"
+                  id="cardCVC"
+                  class="form-control"
+                  required
+                  aria-label="Card CVC"
+                />
               </div>
-              <button type="submit" class="btn btn-primary w-100">Submit Payment</button>
+              <button type="submit" class="btn btn-primary w-100" aria-label="Submit Payment">Submit Payment</button>
             </form>
             <div v-if="message" class="alert mt-3" :class="alertClass">{{ message }}</div>
           </div>
@@ -69,7 +122,6 @@ You said:
 import { ref, computed } from 'vue';
 import { getFirestore, collection, addDoc, Timestamp } from 'firebase/firestore';
 import { useRouter } from 'vue-router';
-
 
 const db = getFirestore();
 
@@ -98,17 +150,17 @@ const closeModal = () => {
 };
 
 const reroute = (id) => {
-    router.push({
-        path: '/volunteering',
-        query: {
-          id: id,
-          name: donor.value.name,
-          email: donor.value.email,
-          amount: donor.value.amount * 100,
-          paymentMethod: donor.value.paymentMethod,
-        },
-      });
-}
+  router.push({
+    path: '/volunteering',
+    query: {
+      id: id,
+      name: donor.value.name,
+      email: donor.value.email,
+      amount: donor.value.amount * 100,
+      paymentMethod: donor.value.paymentMethod,
+    },
+  });
+};
 
 const submitDonation = async () => {
   try {
@@ -125,10 +177,9 @@ const submitDonation = async () => {
 
     const result = await response.json();
     if (response.ok) {
-        message.value = 'Thank you for your donation!';
-         alertClass.value = 'alert-success';
-         console.log("HERE")
-        const docRef = await addDoc(collection(db, 'donations'), {
+      message.value = 'Thank you for your donation!';
+      alertClass.value = 'alert-success';
+      const docRef = await addDoc(collection(db, 'donations'), {
         name: donor.value.name,
         email: donor.value.email,
         amount: donor.value.amount,
@@ -139,7 +190,6 @@ const submitDonation = async () => {
       donor.value = { name: '', email: '', amount: '', paymentMethod: '' }; 
       creditCard.value = { number: '', expiry: '', cvc: '' }; 
       reroute(docRef.id);
-
       
     } else {
       message.value = result.error || 'Something went wrong. Please try again.';
@@ -167,5 +217,19 @@ h2 {
 
 .modal {
   display: block;
+}
+
+.btn-primary {
+  background-color: #007bff; 
+  border-color: #007bff;
+}
+
+.btn-primary:hover {
+  background-color: #0056b3; 
+  border-color: #0056b3;
+}
+
+.card-body {
+  color: #212529; 
 }
 </style>

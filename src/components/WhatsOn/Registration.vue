@@ -4,10 +4,11 @@
 
     <ul class="nav nav-tabs">
       <li class="nav-item">
-        <a class="nav-link" :class="{ active: activeTab === 'all' }" @click="activeTab = 'all'">All Events</a>
+        <a class="nav-link" :class="{ active: activeTab === 'my' }" @click="activeTab = 'my'">My Events</a>
+
       </li>
       <li class="nav-item">
-        <a class="nav-link" :class="{ active: activeTab === 'my' }" @click="activeTab = 'my'">My Events</a>
+        <a class="nav-link" :class="{ active: activeTab === 'all' }" @click="activeTab = 'all'">All Events</a>
       </li>
     </ul>
 
@@ -27,22 +28,26 @@
       </div>
 
       <div v-if="filteredAndSortedEvents.length">
-        <div v-for="event in filteredAndSortedEvents" :key="event.id" class="card mb-3">
-          <div class="card-body">
-            <h5 class="card-title">{{ event.name }}</h5>
-            <h6 class="card-subtitle mb-2 text-muted">
-              Date: {{ event.date.toDate().toLocaleDateString() }}
-            </h6>
-            <p class="card-text">{{ event.description }}</p>
-            <p class="card-text">Location: {{ event.location }}</p>
-            <p class="card-text">Organizer: {{ event.organizer }}</p>
-            <button
-              class="btn btn-primary"
-              @click="register(event)"
-              :disabled="isUserRegistered(event)"
-            >
-              {{ isUserRegistered(event) ? 'Already Registered' : 'Register' }}
-            </button>
+        <div class="row">
+          <div class="col-md-4" v-for="event in filteredAndSortedEvents" :key="event.id">
+            <div class="card mb-3 event-card" @click="goToEventDetails(event.id)">
+              <div class="card-body">
+                <h5 class="card-title">{{ event.name }}</h5>
+                <h6 class="card-subtitle mb-2 text-muted">
+                  Date: {{ event.date.toDate().toLocaleDateString() }}
+                </h6>
+                <p class="card-text">{{ event.description }}</p>
+                <p class="card-text">Location: {{ event.location }}</p>
+                <p class="card-text">Organizer: {{ event.organizer }}</p>
+                <button
+                  class="btn btn-primary"
+                  @click.stop="register(event)"
+                  :disabled="isUserRegistered(event)"
+                >
+                  {{ isUserRegistered(event) ? 'Already Registered' : 'Register' }}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -53,16 +58,20 @@
 
     <div v-if="activeTab === 'my'" class="mt-4">
       <div v-if="myRegisteredEvents.length">
-        <div v-for="event in myRegisteredEvents" :key="event.id" class="card mb-3">
-          <div class="card-body">
-            <h5 class="card-title">{{ event.name }}</h5>
-            <h6 class="card-subtitle mb-2 text-muted">
-              Date: {{ event.date.toDate().toLocaleDateString() }}
-            </h6>
-            <p class="card-text">{{ event.description }}</p>
-            <p class="card-text">Location: {{ event.location }}</p>
-            <p class="card-text">Organizer: {{ event.organizer }}</p>
-            <button class="btn btn-danger" @click="unregister(event)">Unregister</button>
+        <div class="row">
+          <div class="col-md-4" v-for="event in myRegisteredEvents" :key="event.id">
+            <div class="card mb-3 event-card" @click="goToEventDetails(event.id)">
+              <div class="card-body">
+                <h5 class="card-title">{{ event.name }}</h5>
+                <h6 class="card-subtitle mb-2 text-muted">
+                  Date: {{ event.date.toDate().toLocaleDateString() }}
+                </h6>
+                <p class="card-text">{{ event.description }}</p>
+                <p class="card-text">Location: {{ event.location }}</p>
+                <p class="card-text">Organizer: {{ event.organizer }}</p>
+                <button class="btn btn-danger" @click.stop="unregister(event)">Unregister</button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -73,10 +82,10 @@
   </div>
 </template>
 
-
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { getFirestore, collection, getDocs, updateDoc, doc, query, where } from 'firebase/firestore';
+import { useRouter } from 'vue-router'; 
 
 const db = getFirestore();
 const events = ref([]);
@@ -84,7 +93,8 @@ const userEmail = ref('');
 const searchQuery = ref('');
 const sortOrder = ref('');
 const filterOption = ref('all');
-const activeTab = ref('all');
+const activeTab = ref('my');
+const router = useRouter(); 
 
 const fetchUserEmail = async () => {
   const userName = localStorage.getItem('currentUser');
@@ -190,10 +200,19 @@ const filteredAndSortedEvents = computed(() => {
     filteredEvents = filteredEvents.filter(event => !isUserRegistered(event));
   }
 
+  filteredEvents.sort((a, b) => {
+    const isARegistered = isUserRegistered(a);
+    const isBRegistered = isUserRegistered(b);
+    
+    if (isARegistered && !isBRegistered) return 1; 
+    if (!isARegistered && isBRegistered) return -1;
+    return 0;
+  });
+
   if (sortOrder.value === 'date') {
-    filteredEvents = filteredEvents.slice().sort((a, b) => a.date.toDate() - b.date.toDate());
+    filteredEvents.sort((a, b) => a.date.toDate() - b.date.toDate());
   } else if (sortOrder.value === 'name') {
-    filteredEvents = filteredEvents.slice().sort((a, b) => a.name.localeCompare(b.name));
+    filteredEvents.sort((a, b) => a.name.localeCompare(b.name));
   }
 
   return filteredEvents;
@@ -203,12 +222,16 @@ const myRegisteredEvents = computed(() => {
   return events.value.filter(isUserRegistered);
 });
 
+// Function to navigate to event details
+const goToEventDetails = (eventId) => {
+  router.push(`/viewevent/${eventId}`);
+};
+
 onMounted(() => {
   fetchUserEmail();
   fetchEvents();
 });
 </script>
-
 
 <style scoped>
 .container {
@@ -218,8 +241,19 @@ onMounted(() => {
 
 .card {
   margin-top: 15px;
-  padding: 10px;
+  padding: 5px; 
   border: 1px solid #ddd;
   border-radius: 5px;
+  cursor: pointer; 
+  transition: transform 0.2s; 
+}
+
+.card:hover {
+  transform: scale(1.02); 
+}
+
+.event-card {
+  max-width: 300px; 
+  margin: 0 auto; 
 }
 </style>

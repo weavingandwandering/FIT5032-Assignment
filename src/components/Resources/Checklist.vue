@@ -1,7 +1,7 @@
 <template>
   <div class="reminder container">
-    <h1 class="text-center my-4">Set a Reminder</h1>
-    <form @submit.prevent="submitReminder" class="p-4 border rounded">
+    <h2 class="text-center my-4">Set a Reminder</h2>
+    <form @submit.prevent="submitReminder" class="p-4 border rounded" role="form" aria-label="Set a Reminder Form">
       <div class="mb-3">
         <label for="email" class="form-label">Email:</label>
         <input
@@ -10,7 +10,10 @@
           id="email"
           v-model="formData.email"
           readonly
+          aria-describedby="emailHelp"
+          required
         />
+        <div id="emailHelp" class="form-text">Your email address will be used to send the reminder.</div>
       </div>
 
       <div class="mb-3">
@@ -21,12 +24,14 @@
           placeholder="Enter your reminder message"
           v-model="formData.message"
           rows="3"
+          required
+          aria-required="true"
         ></textarea>
       </div>
 
       <div class="mb-3">
         <label for="reminderTime" class="form-label">Select Reminder Time:</label>
-        <select class="form-control" id="reminderTime" v-model="selectedTime">
+        <select class="form-control" id="reminderTime" v-model="selectedTime" aria-required="true" required>
           <option value="">Choose Time</option>
           <option value="15">In 15 minutes</option>
           <option value="30">In 30 minutes</option>
@@ -42,6 +47,8 @@
           class="form-control"
           id="reminderDate"
           v-model="formData.reminderDate"
+          required
+          aria-required="true"
         />
       </div>
 
@@ -53,7 +60,9 @@
           id="attachment"
           @change="handleFileUpload"
           multiple
+          aria-describedby="attachmentHelp"
         />
+        <div id="attachmentHelp" class="form-text">Attach any relevant files for your reminder.</div>
       </div>
 
       <button type="submit" class="btn btn-primary w-100">Set Reminder</button>
@@ -80,7 +89,7 @@ const error = ref(null);
 const successMessage = ref(null);
 const files = ref([]);
 const selectedTime = ref('');
-const route = useRoute(); // Initialize route
+const route = useRoute();
 
 const fetchEmail = async () => {
   try {
@@ -178,33 +187,47 @@ onMounted(() => {
 
 <style scoped>
 .reminder {
-  max-width: 600px;
+  max-width: 500px;
   margin: auto;
+  margin-top: 20px;
   font-size: 18px;
+  background-color: #ffffff;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .form-label {
   font-size: 20px;
+  color: #333;
 }
 
 input, textarea {
   font-size: 18px;
   padding: 12px;
+  border: 2px solid #007bff;
+  border-radius: 4px;
+  transition: border-color 0.3s;
+}
+
+input:focus, textarea:focus, select:focus {
+  border-color: #0056b3;
+  outline: none;
 }
 
 .btn {
-  font-size: 20px;
-  padding: 15px;
+  font-size: 18px;
+  padding: 12px;
 }
 
 .form-control {
-  background-color: #f0f0f0;
+  background-color: #f9f9f9;
   border: 1px solid #d3d3d3;
   color: #333;
 }
 
-h1, label {
-  color: #333;
+h2 {
+  color: #0f7aed;
 }
 
 .text-center {
@@ -213,6 +236,14 @@ h1, label {
 
 .text-success, .text-danger {
   font-size: 18px;
+}
+
+.text-success {
+  color: #28a745;
+}
+
+.text-danger {
+  color: #dc3545;
 }
 
 @media (min-width: 768px) {

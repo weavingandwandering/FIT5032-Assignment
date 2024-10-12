@@ -2,9 +2,9 @@
   <div class="container my-4">
     <div class="row">
       <div class="col-md-6">
-        <div class="card bg-light mb-3">
+        <div class="card bg-light mb-3" role="region" aria-labelledby="event-title">
           <div class="card-body">
-            <h2 class="card-title text-primary">{{ event ? event.name : 'Loading...' }}</h2>
+            <h2 id="event-title" class="card-title text-primary">{{ event ? event.name : 'Loading...' }}</h2>
             <p class="card-text">
               <strong>Date:</strong> <span class="text-muted">{{ event && event.date ? event.date.toDate().toLocaleDateString() : 'Loading...' }}</span>
             </p>
@@ -19,6 +19,14 @@
                 <strong>Distance to current location:</strong> <span class="text-muted">{{ distance }}</span>
               </p>
             </div>
+            <input
+              type="text"
+              class="form-control mt-2"
+              placeholder="Enter a new location"
+              aria-label="Enter a new location to get directions"
+              v-model="newLocation"
+              @keyup.enter="updateRoute"
+            />
             <button class="btn btn-primary mt-4" @click="register">Register for Event</button>
             <div v-if="registrationSuccess" class="alert alert-success mt-2">
               Registration successful! Thank you for signing up.
@@ -47,6 +55,7 @@ const event = ref(null);
 const distance = ref(null);
 const registrationSuccess = ref(false);
 const registrationError = ref(false);
+const newLocation = ref('');
 const route = useRoute();
 const eventId = route.params.id;
 
@@ -88,8 +97,6 @@ const initMap = () => {
           title: event.value.name,
         });
 
-        // Get directions and calculate distance
-        getDirections(results[0].geometry.location, map);
         calculateDistance(results[0].geometry.location);
       } else {
         console.error('Geocode was not successful for the following reason: ' + status);
@@ -100,32 +107,53 @@ const initMap = () => {
   });
 };
 
-const getDirections = (eventLocation, map) => {
-  if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition((position) => {
-      const userLocation = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
-      const directionsService = new google.maps.DirectionsService();
-      const directionsRenderer = new google.maps.DirectionsRenderer();
+const updateRoute = () => {
+  if (!newLocation.value) return;
 
-      directionsRenderer.setMap(map); // Set the map for the directions renderer
+  loader.load().then(() => {
+    const geocoder = new google.maps.Geocoder();
+    geocoder.geocode({ address: newLocation.value }, (results, status) => {
+      if (status === 'OK') {
+        const userLocation = results[0].geometry.location;
+        const map = new google.maps.Map(document.getElementById('map'), {
+          zoom: 15,
+          center: userLocation,
+        });
 
-      const request = {
-        origin: userLocation,
-        destination: eventLocation,
-        travelMode: 'DRIVING',
-      };
+        new google.maps.Marker({
+          position: userLocation,
+          map: map,
+          title: 'Your Location',
+        });
 
-      directionsService.route(request, (result, status) => {
-        if (status === 'OK') {
-          directionsRenderer.setDirections(result);
-        } else {
-          console.error('Directions request failed due to ' + status);
-        }
-      });
+        const eventLocation = event.value.location;
+
+        getDirections(userLocation, eventLocation, map);
+      } else {
+        console.error('Geocode was not successful for the following reason: ' + status);
+      }
     });
-  } else {
-    console.error('Geolocation is not supported by this browser.');
-  }
+  });
+};
+
+const getDirections = (userLocation, eventLocation, map) => {
+  const directionsService = new google.maps.DirectionsService();
+  const directionsRenderer = new google.maps.DirectionsRenderer();
+  directionsRenderer.setMap(map);
+
+  const request = {
+    origin: userLocation,
+    destination: eventLocation,
+    travelMode: 'DRIVING',
+  };
+
+  directionsService.route(request, (result, status) => {
+    if (status === 'OK') {
+      directionsRenderer.setDirections(result);
+    } else {
+      console.error('Directions request failed due to ' + status);
+    }
+  });
 };
 
 const calculateDistance = (eventLocation) => {

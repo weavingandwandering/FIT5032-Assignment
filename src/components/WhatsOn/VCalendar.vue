@@ -1,21 +1,25 @@
 <template>
   <div class="container my-4">
-    <h2 class="mb-4">Upcoming Events for Volunteers</h2>
+    <h2 class="mb-4" role="heading" aria-level="2">Upcoming Events for Volunteers</h2>
 
-    <div class="view-toggle mb-4">
+    <nav class="view-toggle mb-4" aria-label="Event view options">
       <button 
-        @click="viewMode = 'list'" 
+        @click="viewMode = 'list'; handleViewChange()" 
         class="btn" 
-        :class="{ active: viewMode === 'list' }">
+        :class="{ active: viewMode === 'list' }" 
+        role="button" 
+        :aria-pressed="viewMode === 'list'">
         List View
       </button>
       <button 
-        @click="viewMode = 'calendar'" 
+        @click="viewMode = 'calendar'; handleViewChange()" 
         class="btn" 
-        :class="{ active: viewMode === 'calendar' }">
+        :class="{ active: viewMode === 'calendar' }" 
+        role="button" 
+        :aria-pressed="viewMode === 'calendar'">
         Calendar View
       </button>
-    </div>
+    </nav>
 
     <div v-if="viewMode === 'calendar'">
       <FullCalendar 
@@ -24,21 +28,23 @@
     </div>
 
     <div v-if="viewMode === 'list'" class="row mt-4">
+      <label for="search" class="visually-hidden">Search events:</label>
       <input 
+        id="search" 
         type="text" 
         v-model="searchTerm" 
         placeholder="Search events..." 
         class="form-control mb-3" 
       />
-      
+
       <table class="table table-bordered">
         <thead>
           <tr>
-            <th @click="sortTable('name')" style="cursor: pointer;">
+            <th scope="col" @click="sortTable('name')" style="cursor: pointer;" tabindex="0" @keydown.enter="sortTable('name')">
               Event Name 
               <span v-if="sortKey === 'name'">{{ sortDirection === 'asc' ? '↑' : '↓' }}</span>
             </th>
-            <th @click="sortTable('date')" style="cursor: pointer;">
+            <th scope="col" @click="sortTable('date')" style="cursor: pointer;" tabindex="0" @keydown.enter="sortTable('date')">
               Date 
               <span v-if="sortKey === 'date'">{{ sortDirection === 'asc' ? '↑' : '↓' }}</span>
             </th>
@@ -46,7 +52,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="event in paginatedEvents" :key="event.id" @click="goToEventDetails(event.id)">
+          <tr v-for="event in paginatedEvents" :key="event.id" @click="goToEventDetails(event.id)" class="event-item" tabindex="0" @keydown.enter="goToEventDetails(event.id)">
             <td>{{ event.name }}</td>
             <td>{{ event.date.toDate().toLocaleDateString() }}</td>
             <td>{{ event.description }}</td>
@@ -67,7 +73,7 @@
 import FullCalendar from '@fullcalendar/vue3';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, nextTick } from 'vue';
 import { getFirestore, collection, getDocs } from 'firebase/firestore';
 import { useRouter } from 'vue-router';
 
@@ -170,6 +176,15 @@ export default {
       }
     };
 
+    const handleViewChange = () => {
+      nextTick(() => {
+        const firstEvent = document.querySelector('.event-item');
+        if (firstEvent) {
+          firstEvent.focus();
+        }
+      });
+    };
+
     onMounted(() => {
       fetchEvents();
     });
@@ -188,6 +203,7 @@ export default {
       goToEventDetails,
       prevPage,
       nextPage,
+      handleViewChange,
     };
   },
 };
@@ -197,6 +213,10 @@ export default {
 .container {
   max-width: 800px;
   margin: 0 auto;
+  background-color: #ffffff; /* White background for a clean look */
+  padding: 20px;
+  border-radius: 12px; /* Slightly rounded corners */
+  box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1); /* Softer shadow */
 }
 
 .view-toggle {
@@ -207,14 +227,22 @@ export default {
 
 .view-toggle .btn {
   padding: 10px 20px;
-  background-color: #007bff;
+  background-color: #0a7fe6; /* Muted gray for buttons */
   color: white;
   border: none;
+  border-radius: 5px;
   cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s; /* Added transformation */
+}
+
+.view-toggle .btn:hover,
+.view-toggle .btn:focus {
+  background-color: #5a6268; /* Darker gray on hover */
+  transform: scale(1.05); /* Slightly enlarge on hover */
 }
 
 .view-toggle .btn.active {
-  background-color: #0056b3;
+  background-color: #5a6268; /* Active button color */
 }
 
 .row {
@@ -223,14 +251,59 @@ export default {
 
 .event-item {
   margin-top: 15px;
-  padding: 10px;
-  border: 1px solid #ddd;
-  border-radius: 5px;
+  padding: 15px;
+  border: 1px solid #dee2e6; /* Light gray border */
+  border-radius: 8px; /* More rounded corners */
+  background-color: #a8d3ff; /* Very light gray background for events */
+  transition: background-color 0.3s ease; /* Smooth background change */
+}
+
+.event-item:hover,
+.event-item:focus {
+  background-color: #e9ecef; /* Slightly darker gray on hover/focus */
 }
 
 .pagination {
   display: flex;
   justify-content: space-between;
   margin-top: 20px;
+}
+
+.pagination button {
+  padding: 8px 16px;
+  background-color: #17a2b8; /* Muted teal color for pagination */
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s; /* Added transformation */
+}
+
+.pagination button:hover,
+.pagination button:focus {
+  background-color: #138496; /* Darker teal on hover */
+  transform: scale(1.05); /* Slightly enlarge on hover */
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+th {
+  background-color: #6c757d; /* Muted gray header */
+  color: white;
+  padding: 12px;
+  text-align: left;
+}
+
+td {
+  padding: 12px;
+  border: 1px solid #dee2e6; /* Light gray border for cells */
+}
+
+td:hover {
+  background-color: #f1f1f1; /* Very light gray on hover */
 }
 </style>

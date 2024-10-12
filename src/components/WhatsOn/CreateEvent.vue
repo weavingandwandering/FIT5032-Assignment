@@ -1,29 +1,31 @@
 <template>
-  <div class="container my-4">
-    <h2 class="mb-4">Upcoming Events for Volunteers</h2>
+  <div class="container my-4" role="region" aria-labelledby="upcoming-events">
+    <h2 id="upcoming-events" class="mb-4">Upcoming Events for Volunteers</h2>
     <h6 class="mb-4">Content Generated using ChatGPT</h6>
 
     <div v-if="isVolunteer" class="mb-4">
       <h4>Create a New Event</h4>
-      <form @submit.prevent="createEvent">
+      <form @submit.prevent="createEvent" aria-labelledby="event-form">
         <div class="mb-3">
           <label for="eventName" class="form-label">Event Name</label>
-          <input v-model="newEvent.name" id="eventName" type="text" class="form-control" required />
+          <input v-model="newEvent.name" id="eventName" type="text" class="form-control" required aria-required="true" />
         </div>
         <div class="mb-3">
           <label for="eventDate" class="form-label">Event Date</label>
-          <input v-model="newEvent.date" id="eventDate" type="date" class="form-control" required />
+          <input v-model="newEvent.date" id="eventDate" type="date" class="form-control" required aria-required="true" />
         </div>
         <div class="mb-3">
           <label for="eventDescription" class="form-label">Event Description</label>
-          <textarea v-model="newEvent.description" id="eventDescription" class="form-control" required></textarea>
+          <textarea v-model="newEvent.description" id="eventDescription" class="form-control" required aria-required="true"></textarea>
         </div>
         <div class="mb-3">
           <label for="eventLocation" class="form-label">Event Location</label>
-          <input v-model="newEvent.location" id="eventLocation" type="text" class="form-control" placeholder="Search for a place..." required @input="handleInput" />
-          <div v-if="predictions.length" class="suggestions">
+          <input v-model="newEvent.location" id="eventLocation" type="text" class="form-control" placeholder="Search for a place..." required @input="handleInput" aria-required="true" />
+          <div v-if="predictions.length" class="suggestions" role="listbox" aria-label="Place suggestions">
             <ul>
-              <li v-for="(prediction, index) in predictions" :key="index" @click="selectPlace(prediction)">{{ prediction.description }}</li>
+              <li v-for="(prediction, index) in predictions" :key="index" @click="selectPlace(prediction)" role="option" tabindex="0" @keydown.enter="selectPlace(prediction)">
+                {{ prediction.description }}
+              </li>
             </ul>
           </div>
         </div>
@@ -35,11 +37,21 @@
       </form>
     </div>
 
+    <!-- Tabs for Event Display -->
+    <ul class="nav nav-tabs mb-4">
+      <li class="nav-item">
+        <a class="nav-link" :class="{ active: activeTab === 'all' }" @click="activeTab = 'all'">All Events</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" :class="{ active: activeTab === 'myEvents' }" @click="activeTab = 'myEvents'">My Events</a>
+      </li>
+    </ul>
+
     <!-- Event Display Section -->
     <div class="row">
-      <div v-for="event in events" :key="event.id" class="col-md-4 mb-3">
-        <div class="card h-100">
-          <div class="card-body">
+      <div v-for="event in filteredEvents" :key="event.id" class="col-md-4 mb-3">
+        <div class="card h-100" tabindex="0">
+          <div class="card-body" :style="{ backgroundColor: '#e7f3fe', borderColor: '#b3d4fc' }">
             <h5 class="card-title">{{ event.name }}</h5>
             <h6 class="card-subtitle mb-2 text-muted">
               Date: {{ event.date.toDate().toLocaleDateString() }}
@@ -55,7 +67,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { getFirestore, collection, addDoc, getDocs, Timestamp } from 'firebase/firestore';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import loader from './googleMapsLoader';
@@ -69,6 +81,7 @@ const isVolunteer = ref(false);
 const userName = ref(''); 
 const predictions = ref([]); 
 let autocompleteService = null;
+const activeTab = ref('all'); // Track the active tab
 
 const fetchEvents = async () => {
   const querySnapshot = await getDocs(collection(db, 'events'));
@@ -133,6 +146,14 @@ const selectPlace = (place) => {
   newEvent.value.location = place.description;
   predictions.value = [];
 };
+
+// Computed property to filter events based on active tab
+const filteredEvents = computed(() => {
+  if (activeTab.value === 'myEvents') {
+    return events.value.filter(event => event.organizer === userName.value);
+  }
+  return events.value;
+});
 </script>
 
 <style scoped>
@@ -167,7 +188,24 @@ const selectPlace = (place) => {
   cursor: pointer;
 }
 
-.suggestions li:hover {
+.suggestions li:hover,
+.suggestions li:focus {
   background-color: #f0f0f0;
+}
+
+/* Tab Styles */
+.nav-tabs .nav-link.active {
+  background-color: #007bff;
+  color: white;
+}
+
+.nav-tabs .nav-link {
+  color: #007bff;
+}
+
+/* Card Background Color */
+.card-body {
+  background-color: #e7f3fe;
+  border-color: #b3d4fc;
 }
 </style>
