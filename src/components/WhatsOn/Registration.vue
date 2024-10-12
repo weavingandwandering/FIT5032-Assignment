@@ -2,25 +2,43 @@
   <div class="container my-4">
     <h2 class="mb-4">Events</h2>
 
-    <ul class="nav nav-tabs">
+    <ul class="nav nav-tabs" role="tablist" aria-label="Event tabs">
       <li class="nav-item">
-        <a class="nav-link" :class="{ active: activeTab === 'my' }" @click="activeTab = 'my'">My Events</a>
-
+        <a
+          class="nav-link"
+          :class="{ active: activeTab === 'my' }"
+          @click="activeTab = 'my'"
+          role="tab"
+          aria-selected="activeTab === 'my'"
+          tabindex="0"
+        >
+          My Events
+        </a>
       </li>
       <li class="nav-item">
-        <a class="nav-link" :class="{ active: activeTab === 'all' }" @click="activeTab = 'all'">All Events</a>
+        <a
+          class="nav-link"
+          :class="{ active: activeTab === 'all' }"
+          @click="activeTab = 'all'"
+          role="tab"
+          aria-selected="activeTab === 'all'"
+          tabindex="0"
+        >
+          All Events
+        </a>
       </li>
     </ul>
 
+    <!-- All Events -->
     <div v-if="activeTab === 'all'" class="mt-4">
       <div class="d-flex justify-content-between mb-3">
-        <input v-model="searchQuery" class="form-control w-50" placeholder="Search events..." />
-        <select v-model="sortOrder" class="form-select w-25">
+        <input v-model="searchQuery" class="form-control w-50" placeholder="Search events..." aria-label="Search events" />
+        <select v-model="sortOrder" class="form-select w-25" aria-label="Sort events">
           <option value="">Sort by</option>
           <option value="date">Date</option>
           <option value="name">Name</option>
         </select>
-        <select v-model="filterOption" class="form-select w-25">
+        <select v-model="filterOption" class="form-select w-25" aria-label="Filter events">
           <option value="all">All Events</option>
           <option value="registered">Registered Events</option>
           <option value="unregistered">Unregistered Events</option>
@@ -29,8 +47,12 @@
 
       <div v-if="filteredAndSortedEvents.length">
         <div class="row">
-          <div class="col-md-4" v-for="event in filteredAndSortedEvents" :key="event.id">
-            <div class="card mb-3 event-card" @click="goToEventDetails(event.id)">
+          <div
+            class="col-md-4"
+            v-for="event in filteredAndSortedEvents"
+            :key="event.id"
+          >
+            <div class="card mb-3 event-card" @click="goToEventDetails(event.id)" role="button" tabindex="0" aria-label="View event details for {{ event.name }}">
               <div class="card-body">
                 <h5 class="card-title">{{ event.name }}</h5>
                 <h6 class="card-subtitle mb-2 text-muted">
@@ -39,12 +61,23 @@
                 <p class="card-text">{{ event.description }}</p>
                 <p class="card-text">Location: {{ event.location }}</p>
                 <p class="card-text">Organizer: {{ event.organizer }}</p>
+
                 <button
+                  v-if="!isUserRegistered(event)"
                   class="btn btn-primary"
                   @click.stop="register(event)"
-                  :disabled="isUserRegistered(event)"
+                  aria-label="Register for {{ event.name }}"
                 >
-                  {{ isUserRegistered(event) ? 'Already Registered' : 'Register' }}
+                  Register
+                </button>
+
+                <button
+                  v-if="isUserRegistered(event)"
+                  class="btn btn-danger"
+                  @click.stop="unregister(event)"
+                  aria-label="Unregister from {{ event.name }}"
+                >
+                  Unregister
                 </button>
               </div>
             </div>
@@ -56,21 +89,15 @@
       </div>
     </div>
 
+    <!-- My Registered Events -->
     <div v-if="activeTab === 'my'" class="mt-4">
       <div v-if="myRegisteredEvents.length">
         <div class="row">
-          <div class="col-md-4" v-for="event in myRegisteredEvents" :key="event.id">
-            <div class="card mb-3 event-card" @click="goToEventDetails(event.id)">
-              <div class="card-body">
-                <h5 class="card-title">{{ event.name }}</h5>
-                <h6 class="card-subtitle mb-2 text-muted">
-                  Date: {{ event.date.toDate().toLocaleDateString() }}
-                </h6>
-                <p class="card-text">{{ event.description }}</p>
-                <p class="card-text">Location: {{ event.location }}</p>
-                <p class="card-text">Organizer: {{ event.organizer }}</p>
-                <button class="btn btn-danger" @click.stop="unregister(event)">Unregister</button>
-              </div>
+          <div class="col-md-12">
+            <div class="calendar-container">
+              <FullCalendar
+                :options="calendarOptions"
+              />
             </div>
           </div>
         </div>
@@ -84,8 +111,10 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
+import FullCalendar from '@fullcalendar/vue3';
+import dayGridPlugin from '@fullcalendar/daygrid';
 import { getFirestore, collection, getDocs, updateDoc, doc, query, where } from 'firebase/firestore';
-import { useRouter } from 'vue-router'; 
+import { useRouter } from 'vue-router';
 
 const db = getFirestore();
 const events = ref([]);
@@ -94,7 +123,25 @@ const searchQuery = ref('');
 const sortOrder = ref('');
 const filterOption = ref('all');
 const activeTab = ref('my');
-const router = useRouter(); 
+const router = useRouter();
+
+const headerToolbar = {
+  left: 'prev,next today',
+  center: 'title',
+  right: 'dayGridMonth,dayGridWeek,dayGridDay',
+};
+
+const calendarOptions = ref({
+  plugins: [dayGridPlugin],
+  initialView: 'dayGridMonth',
+  events: [],
+  headerToolbar: headerToolbar,
+  editable: true,
+  eventClick: (info) => {
+    console.log(info.ee)
+    router.push({ name: 'ViewEvent', params: { id: info.event.id } });
+  },
+});
 
 const fetchUserEmail = async () => {
   const userName = localStorage.getItem('currentUser');
@@ -126,6 +173,8 @@ const fetchEvents = async () => {
     ...doc.data(),
     date: doc.data().date,
   }));
+
+  updateCalendar();
 };
 
 const isUserRegistered = (event) => {
@@ -148,12 +197,10 @@ const register = async (event) => {
     const attendees = event.attendees || [];
     attendees.push(userEmail.value);
 
-    await updateDoc(eventRef, {
-      attendees: attendees,
-    });
-
-    event.attendees = attendees; // Update local state
+    await updateDoc(eventRef, { attendees: attendees });
+    event.attendees = attendees;
     alert('Registration successful!');
+    updateCalendar();
   } catch (error) {
     console.error('Error registering for event:', error);
   }
@@ -169,15 +216,12 @@ const unregister = async (event) => {
     const eventRef = doc(db, 'events', event.id);
     const attendees = event.attendees || [];
     const index = attendees.indexOf(userEmail.value);
-    
     if (index > -1) {
       attendees.splice(index, 1);
-      await updateDoc(eventRef, {
-        attendees: attendees,
-      });
-
-      event.attendees = attendees; // Update local state to reflect change
+      await updateDoc(eventRef, { attendees: attendees });
+      event.attendees = attendees;
       alert('Unregistered successfully.');
+      updateCalendar();
     }
   } catch (error) {
     console.error('Error unregistering from event:', error);
@@ -194,17 +238,10 @@ const filteredAndSortedEvents = computed(() => {
     );
   }
 
-  if (filterOption.value === 'registered') {
-    filteredEvents = filteredEvents.filter(isUserRegistered);
-  } else if (filterOption.value === 'unregistered') {
-    filteredEvents = filteredEvents.filter(event => !isUserRegistered(event));
-  }
-
   filteredEvents.sort((a, b) => {
     const isARegistered = isUserRegistered(a);
     const isBRegistered = isUserRegistered(b);
-    
-    if (isARegistered && !isBRegistered) return 1; 
+    if (isARegistered && !isBRegistered) return 1;
     if (!isARegistered && isBRegistered) return -1;
     return 0;
   });
@@ -219,41 +256,35 @@ const filteredAndSortedEvents = computed(() => {
 });
 
 const myRegisteredEvents = computed(() => {
-  return events.value.filter(isUserRegistered);
+  return events.value.filter(event => isUserRegistered(event));
 });
 
-// Function to navigate to event details
 const goToEventDetails = (eventId) => {
-  router.push(`/viewevent/${eventId}`);
+  router.push({ name: 'ViewEvent', params: { id: eventId } });
 };
 
-onMounted(() => {
-  fetchUserEmail();
-  fetchEvents();
+const updateCalendar = () => {
+  const calendarEvents = myRegisteredEvents.value.map(event => ({
+    id: event.id,
+    title: event.name,
+    start: event.date.toDate(),
+  }));
+  calendarOptions.value.events = calendarEvents;
+};
+
+onMounted(async () => {
+  await fetchUserEmail();
+  await fetchEvents();
 });
 </script>
 
 <style scoped>
-.container {
-  max-width: 800px;
-  margin: 0 auto;
-}
-
-.card {
-  margin-top: 15px;
-  padding: 5px; 
-  border: 1px solid #ddd;
-  border-radius: 5px;
-  cursor: pointer; 
-  transition: transform 0.2s; 
-}
-
-.card:hover {
-  transform: scale(1.02); 
-}
-
 .event-card {
-  max-width: 300px; 
-  margin: 0 auto; 
+  cursor: pointer;
+}
+.event-card:focus,
+.event-card:hover {
+  background-color: #f9f9f9;
+  outline: none;
 }
 </style>

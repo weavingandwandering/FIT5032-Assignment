@@ -35,7 +35,6 @@ const donor = ref({
   paymentMethod: '',
 });
 
-// Fetch donor information from Firestore
 const fetchDonorInfo = async (id) => {
   const donorDoc = doc(db, 'donations', id);
   const docSnapshot = await getDoc(donorDoc);

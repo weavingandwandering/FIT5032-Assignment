@@ -22,7 +22,7 @@
             <input
               type="text"
               class="form-control mt-2"
-              placeholder="Enter a new location"
+              placeholder="Enter a new location or leave blank for current location"
               aria-label="Enter a new location to get directions"
               v-model="newLocation"
               @keyup.enter="updateRoute"
@@ -45,9 +45,9 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue';
+import { ref, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
-import { getFirestore, doc, getDoc, updateDoc, arrayUnion } from 'firebase/firestore';
+import { getFirestore, doc, getDoc, updateDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import loader from './googleMapsLoader';
 
 const db = getFirestore();
@@ -58,6 +58,7 @@ const registrationError = ref(false);
 const newLocation = ref('');
 const route = useRoute();
 const eventId = route.params.id;
+const userEmail = ref('');
 
 const fetchEventDetails = async () => {
   try {
@@ -66,6 +67,7 @@ const fetchEventDetails = async () => {
     if (eventSnap.exists()) {
       event.value = {
         id: eventSnap.id,
+        attendees: eventSnap.data().attendees || [],
         ...eventSnap.data(),
       };
       initMap();
@@ -77,30 +79,66 @@ const fetchEventDetails = async () => {
   }
 };
 
-const initMap = () => {
-  if (!event.value || !event.value.location) return;
+const fetchUserEmail = async () => {
+  const userName = localStorage.getItem('currentUser');
+  if (!userName) {
+    alert('No username found in localStorage. Please log in.');
+    return;
+  }
 
+  try {
+    const usersCollection = collection(db, 'users');
+    const q = query(usersCollection, where('username', '==', userName));
+    const querySnapshot = await getDocs(q);
+
+    if (!querySnapshot.empty) {
+      const userDoc = querySnapshot.docs[0];
+      userEmail.value = userDoc.data().email;
+    } else {
+      console.error('No user found with the provided username.');
+    }
+  } catch (error) {
+    console.error('Error fetching user email:', error);
+  }
+};
+
+const initMap = () => {
   loader.load().then(() => {
+    if (!event.value || !event.value.location) return;
+
     const geocoder = new google.maps.Geocoder();
     const eventLocation = event.value.location;
 
-    geocoder.geocode({ address: eventLocation }, (results, status) => {
-      if (status === 'OK') {
-        const map = new google.maps.Map(document.getElementById('map'), {
-          zoom: 15,
-          center: results[0].geometry.location,
-        });
+    navigator.geolocation.getCurrentPosition((position) => {
+      const userLocation = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
+      
+      geocoder.geocode({ address: eventLocation }, (results, status) => {
+        if (status === 'OK') {
+          const map = new google.maps.Map(document.getElementById('map'), {
+            zoom: 15,
+            center: userLocation,
+          });
 
-        new google.maps.Marker({
-          position: results[0].geometry.location,
-          map: map,
-          title: event.value.name,
-        });
+          new google.maps.Marker({
+            position: userLocation,
+            map: map,
+            title: 'Your Location',
+          });
 
-        calculateDistance(results[0].geometry.location);
-      } else {
-        console.error('Geocode was not successful for the following reason: ' + status);
-      }
+          new google.maps.Marker({
+            position: results[0].geometry.location,
+            map: map,
+            title: event.value.name,
+          });
+
+          getDirections(userLocation, results[0].geometry.location, map);
+          calculateDistance(results[0].geometry.location);
+        } else {
+          console.error('Geocode was not successful for the following reason: ' + status);
+        }
+      });
+    }, (error) => {
+      console.error('Geolocation error:', error);
     });
   }).catch(e => {
     console.error('Error loading Google Maps:', e);
@@ -108,13 +146,36 @@ const initMap = () => {
 };
 
 const updateRoute = () => {
-  if (!newLocation.value) return;
-
   loader.load().then(() => {
     const geocoder = new google.maps.Geocoder();
-    geocoder.geocode({ address: newLocation.value }, (results, status) => {
+
+    if (newLocation.value) {
+      geocoder.geocode({ address: newLocation.value }, (results, status) => {
+        if (status === 'OK') {
+          const userLocation = results[0].geometry.location;
+          displayRoute(userLocation);
+        } else {
+          console.error('Geocode was not successful for the following reason: ' + status);
+        }
+      });
+    } else {
+      navigator.geolocation.getCurrentPosition((position) => {
+        const userLocation = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
+        displayRoute(userLocation);
+      }, (error) => {
+        console.error('Geolocation error:', error);
+      });
+    }
+  });
+};
+
+const displayRoute = (userLocation) => {
+  loader.load().then(() => {
+    const geocoder = new google.maps.Geocoder();
+    const eventLocation = event.value.location;
+
+    geocoder.geocode({ address: eventLocation }, (results, status) => {
       if (status === 'OK') {
-        const userLocation = results[0].geometry.location;
         const map = new google.maps.Map(document.getElementById('map'), {
           zoom: 15,
           center: userLocation,
@@ -126,9 +187,8 @@ const updateRoute = () => {
           title: 'Your Location',
         });
 
-        const eventLocation = event.value.location;
-
-        getDirections(userLocation, eventLocation, map);
+        const destination = results[0].geometry.location;
+        getDirections(userLocation, destination, map);
       } else {
         console.error('Geocode was not successful for the following reason: ' + status);
       }
@@ -183,41 +243,45 @@ const calculateDistance = (eventLocation) => {
   }
 };
 
+const isUserRegistered = (event) => {
+  return event.attendees && event.attendees.includes(userEmail.value);
+};
+
 const register = async () => {
+  if (!userEmail.value) {
+    alert('Please log in to register for an event.');
+    return;
+  }
+
+  if (isUserRegistered(event.value)) {
+    alert('You are already registered for this event.');
+    return;
+  }
+
   try {
-    const eventRef = doc(db, 'events', eventId);
-    await updateDoc(eventRef, {
-      attendees: arrayUnion({ name: 'Your Name', email: 'your-email@example.com' })
-    });
-    registrationSuccess.value = true;
-    registrationError.value = false;
+    const eventRef = doc(db, 'events', event.value.id);
+    const attendees = event.value.attendees || [];
+    attendees.push(userEmail.value);
+
+    await updateDoc(eventRef, { attendees });
+    event.value.attendees = attendees;
+    registrationSuccess.value = true; 
+    alert('Registration successful!');
   } catch (error) {
     registrationError.value = true;
-    registrationSuccess.value = false;
     console.error('Error registering for event:', error);
   }
 };
 
-onMounted(() => {
+onMounted(() => { 
+  fetchUserEmail();
   fetchEventDetails();
-});
-
-watch(event, (newEvent) => {
-  if (newEvent) {
-    initMap(); 
-  }
 });
 </script>
 
 <style scoped>
-.card {
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  border-radius: 0.5rem;
-}
-
 #map {
   height: 400px;
   width: 100%;
-  border-radius: 0.5rem;
 }
 </style>
