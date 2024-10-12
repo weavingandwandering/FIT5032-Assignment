@@ -4,4 +4,4 @@ type = "javascript"
 compatibility_date = "2024-10-12"
 
 # Specify the output directory for the Pages deployment
-pages_build_output_dir = "fit5032-assignment-2/dist"  # Adjust if your output directory differs
+pages_build_output_dir = "fit5032-assignment2/dist"  # Adjust if your output directory differs
