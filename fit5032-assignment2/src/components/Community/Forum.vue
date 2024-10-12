@@ -41,11 +41,14 @@
           @click="viewPost(post.id)"
           style="cursor: pointer"
         >
-          <td>{{ post.id }}</td>
+          <td>{{ post.postNumber }}</td>
           <td>{{ post.title }}</td>
           <td>{{ post.currentuser }}</td>
           <td>{{ roles[post.currentuser] || 'Loading...' }}</td>
-          <td>{{ getRating(post.id)[0] }}/{{ getRating(post.id)[1] }}</td>
+          <td>
+            <strong>Avg:</strong> {{ post.averageRating }}<br />
+            <strong>Total Ratings:</strong> {{ post.ratingCount }}
+          </td>        
         </tr>
       </tbody>
     </table>
@@ -61,9 +64,9 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { getFirestore, collection, query, where, getDocs } from 'firebase/firestore';
+import { getFirestore, collection, getDocs, query, where } from 'firebase/firestore';
 
-const posts = ref(JSON.parse(localStorage.getItem('post')) || []);
+const posts = ref([]);
 const globalSearch = ref('');
 const sortBy = ref('');
 const currentPage = ref(1);
@@ -76,11 +79,27 @@ const newPost = () => {
   router.push('/newpost');
 };
 
+const fetchPosts = async () => {
+  const postsCollection = collection(db, 'posts');
+  const postsSnapshot = await getDocs(postsCollection);
+  const postsData = postsSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+
+  for (const post of postsData) {
+    const [average, count] = await getRating(post.id);
+    post.averageRating = average; 
+    post.ratingCount = count; 
+  }
+
+  posts.value = postsData;
+  fetchRoles();
+};
+
+
 const fetchRoles = async () => {
-  const uniqueUsers = [...new Set(posts.value.map(post => post.currentuser))]; // Get unique usernames
+  const uniqueUsers = [...new Set(posts.value.map(post => post.currentuser))];
   for (const username of uniqueUsers) {
     if (username) {
-      roles.value[username] = await getRole(username); // Fetch role for each user
+      roles.value[username] = await getRole(username);
     }
   }
 };
@@ -120,7 +139,6 @@ const filteredPosts = computed(() => {
   return filtered;
 });
 
-
 const paginatedPosts = computed(() => {
   const start = (currentPage.value - 1) * rowsPerPage;
   return filteredPosts.value.slice(start, start + rowsPerPage);
@@ -154,26 +172,24 @@ const getRole = async (usernameFromLocalStorage) => {
   }
 };
 
-const getRating = (id) => {
-  const ratings = JSON.parse(localStorage.getItem('rating')) || [];
-  const ratingList = ratings.find(rating => rating.id == id);
-
-  if (!ratingList) {
-    return [0, 0]; 
-  }
-
-  const rating = ratingList.rating;
-  let sum = 0;
-
-  for (let i = 0; i < rating.length; i++) {
-    sum += rating[i];
-  }
-
-  const average = sum / rating.length;
-  return [average.toFixed(2), rating.length];
+const getRating = (postId) => {
+  const ratingRef = collection(db, 'ratings');
+  console.log(postId)
+  return getDocs(query(ratingRef, where('postId', '==', postId))).then(snapshot => {
+    console.log(snapshot.empty)
+    if (!snapshot.empty) {
+      console.log(snapshot.docs[0].data().rating)
+      const ratingList = snapshot.docs[0].data().rating;
+      const sum = ratingList.reduce((a, b) => a + b, 0);
+      console.log(sum)
+      const average = sum / ratingList.length;
+      return [average.toFixed(2), ratingList.length];
+    }
+    return [0, 0];
+  });
 };
 
 onMounted(() => {
-  fetchRoles();
+  fetchPosts();
 });
 </script>
