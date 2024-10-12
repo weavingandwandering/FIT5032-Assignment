@@ -1,12 +1,10 @@
 name = "fit5032-assignment2"
 type = "javascript"
 
-account_id = "your-account-id"  # Replace with your actual Cloudflare account ID
-workers_dev = true
 compatibility_date = "2024-10-12"
 
-# Build command and directory settings
-build = { command = "npm run build", cwd = "fit5032-assignment2" }
-
 # Specify the output directory for the Pages deployment
-pages_build_output_dir = "fit5032-assignment2/dist"  # Replace with the actual output directory if different
+pages_build_output_dir = "fit5032-assignment-2/dist"  # Adjust if your output directory differs
+
+# Specify the build command for the Pages project
+build = { command = "npm run build" }
