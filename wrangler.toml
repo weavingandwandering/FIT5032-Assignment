@@ -1,8 +1,8 @@
 name = "fit5032-assignment2"
-type = "javascript"
+version = "1.0.0"
 
-account_id = "your-account-id"
-workers_dev = true
-compatibility_date = "2024-10-12"
+route = {
+  pattern = "/*/"
+}
 
-build = { command = "npm run build", cwd = "Assignment-1/fit5032-assignment-2" }
+main = "index.js"
