@@ -6,7 +6,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { getFirestore, collection, getDocs } from 'firebase/firestore';
 import loader from './googleMapsLoader';
@@ -19,8 +19,7 @@ const events = ref([]);
 const nearbyEvents = ref([]);
 const userLocation = ref(null);
 const markers = [];
-
-
+let map = null;
 
 const goToEventDetails = (eventId) => {
   router.push({ name: 'ViewEvent', params: { id: eventId } });
@@ -33,26 +32,30 @@ const fetchEvents = async () => {
 };
 
 const fetchUserLocation = () => {
-  if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition(position => {
-      userLocation.value = {
-        lat: position.coords.latitude,
-        lng: position.coords.longitude,
-      };
-      initMap();
-    }, () => {
-      alert('Error: The Geolocation service failed. Please enable location services.');
-    });
-  } else {
-    alert('Error: Your browser doesn\'t support geolocation.');
-  }
+  return new Promise((resolve, reject) => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(position => {
+        userLocation.value = {
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+        };
+        resolve();
+      }, () => {
+        alert('Error: The Geolocation service failed. Please enable location services.');
+        reject();
+      });
+    } else {
+      alert('Error: Your browser doesn\'t support geolocation.');
+      reject();
+    }
+  });
 };
 
 const initMap = () => {
-  if (!userLocation.value) return;
+  if (!userLocation.value || !events.value.length) return;
 
   loader.load().then(() => {
-    const map = new google.maps.Map(document.getElementById('map'), {
+    map = new google.maps.Map(document.getElementById('map'), {
       center: userLocation.value,
       zoom: 12,
     });
@@ -62,7 +65,7 @@ const initMap = () => {
       map: map,
       title: "Your Location",
       icon: {
-        url: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png",
+        url: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png",
       },
     });
 
@@ -135,9 +138,20 @@ const initMap = () => {
   });
 };
 
-onMounted(() => {
-  fetchEvents();
-  fetchUserLocation();
+// Fetch events and user location in parallel and wait for both to complete
+onMounted(async () => {
+  try {
+    await Promise.all([fetchEvents(), fetchUserLocation()]);
+  } catch (error) {
+    console.error('Failed to fetch events or user location:', error);
+  }
+});
+
+// Watch for changes in events and user location and reinitialize the map
+watch([events, userLocation], () => {
+  if (userLocation.value && events.value.length) {
+    initMap();
+  }
 });
 </script>
 

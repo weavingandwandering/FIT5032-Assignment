@@ -59,7 +59,6 @@ const submitForm = async () => {
     const userCredential = await signInWithEmailAndPassword(auth, formData.value.email, formData.value.password);
     const user = userCredential.user;
 
-    // Fetch the user's document from Firestore
     const userDoc = await getDoc(doc(db, 'users', user.uid));
 
     if (userDoc.exists()) {
