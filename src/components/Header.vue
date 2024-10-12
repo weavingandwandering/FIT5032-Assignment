@@ -21,6 +21,8 @@
             <ul v-if="isOpen.resourcesDropdown" class="dropdown-menu">
               <li><router-link to="/videos" class="dropdown-item">Checklist</router-link></li>
               <li><router-link to="/health-checklist" class="dropdown-item">Custom Reminder</router-link></li>
+              <li><router-link to="/articles" class="dropdown-item">Custee</router-link></li>
+
             </ul>
           </li>
 
@@ -35,7 +37,7 @@
           <li class="nav-item dropdown" @click="toggleDropdown('whatsOnDropdown')">
             <a class="nav-link dropdown-toggle" role="button" aria-expanded="isOpen.whatsOnDropdown">What's On</a>
             <ul v-if="isOpen.whatsOnDropdown" class="dropdown-menu">
-              <li><router-link to="/ecalendar" class="dropdown-item">Nearby Events</router-link></li>
+              <li><router-link to="/ecalendar" class="dropdown-item">Nearby Events </router-link></li>
               <li><router-link to="/registration" class="dropdown-item">Registration</router-link></li>
               <li><router-link to="/vcalendar" class="dropdown-item">Events</router-link></li>
               <li><router-link to="/eventcreate" class="dropdown-item">Host an Event</router-link></li>

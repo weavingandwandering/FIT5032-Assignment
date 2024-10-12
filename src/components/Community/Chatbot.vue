@@ -1,24 +1,40 @@
 <template>
-  <div class="chatbot container mt-4">
-    <div class="chat-window card">
-      <div class="card-body chat-messages">
-        <div v-for="(message, index) in messages" :key="index" class="message mb-3">
+  <div class="chatbot container mt-4" role="application" aria-label="Chatbot">
+    <div class="chat-window card" aria-live="polite" aria-relevant="additions">
+      <div class="card-header text-center">
+        <h2>Talk to Our AI Chatbot</h2>
+        <p>Ask questions, get advice, or just have a chat!</p>
+      </div>
+      <div class="card-body chat-messages" tabindex="0" aria-label="Chat messages">
+        <div
+          v-for="(message, index) in messages"
+          :key="index"
+          class="message mb-3"
+          :aria-live="message.isUser ? 'polite' : 'assertive'"
+        >
           <div class="d-flex" :class="{'justify-content-end': message.isUser, 'justify-content-start': !message.isUser}">
-            <p :class="{'user-message': message.isUser, 'bot-message': !message.isUser, 'p-2': true, 'rounded': true}">
+            <p
+              :class="{'user-message': message.isUser, 'bot-message': !message.isUser, 'p-2': true, 'rounded': true}"
+              role="text"
+              aria-label="Chat message"
+            >
               {{ message.text }}
             </p>
           </div>
         </div>
       </div>
       <div class="card-footer">
-        <div class="input-group">
+        <div class="input-group" aria-label="Message input group">
           <input
             v-model="userMessage"
             @keyup.enter="sendMessage"
             placeholder="Type your message..."
             class="form-control"
+            aria-label="Message input"
+            required
+            aria-required="true"
           />
-          <button @click="sendMessage" class="btn btn-primary">Send</button>
+          <button @click="sendMessage" class="btn btn-primary" aria-label="Send message">Send</button>
         </div>
         <div class="mt-3">
           <p>Try one of these prompts:</p>
@@ -28,6 +44,7 @@
               :key="prompt.text"
               @click="setPrompt(prompt.text)"
               class="btn btn-outline-secondary"
+              aria-label="Dynamic prompt"
             >
               {{ prompt.text }}
             </button>
@@ -44,7 +61,7 @@ import axios from 'axios';
 
 const userMessage = ref('');
 const messages = ref([]);
-const conversationContext = ref(''); 
+const conversationContext = ref('');
 
 const cloudFunctionUrl = 'https://australia-southeast1-ishita-assignment3.cloudfunctions.net/chatbotAPI';
 
@@ -58,6 +75,7 @@ const sendMessage = async () => {
       return;
     }
 
+    // Update conversation context based on user message
     if (userMessage.value.toLowerCase().includes('health')) {
       conversationContext.value = 'health';
     } else if (userMessage.value.toLowerCase().includes('joke')) {
@@ -67,22 +85,23 @@ const sendMessage = async () => {
     } else if (userMessage.value.toLowerCase().includes('fun')) {
       conversationContext.value = 'fun';
     } else {
-      conversationContext.value = ''; 
+      conversationContext.value = '';
     }
 
     const response = await axios.post(cloudFunctionUrl, { message: userMessage.value });
 
     const botReply = response.data.reply;
 
+    // Add user message
     messages.value.push({ text: userMessage.value, isUser: true });
     const lines = botReply[0].content.parts[0].text.split('\n');
 
-
+    // Add bot messages
     lines.forEach(line => {
-    const trimmedLine = line.trim();
-    if (trimmedLine) { 
+      const trimmedLine = line.trim();
+      if (trimmedLine) {
         messages.value.push({ text: trimmedLine, isUser: false });
-    }
+      }
     });
     userMessage.value = '';
     
@@ -122,7 +141,6 @@ const getDynamicPrompts = () => {
   }
 };
 
-
 const initializeChat = () => {
   messages.value.push({ text: `Hey ${localStorage.getItem('currentUser')}, how can I help you today?`, isUser: false });
 }
@@ -136,6 +154,11 @@ onMounted(() => {
 .chat-window {
   max-width: 600px;
   margin: 0 auto;
+}
+
+.card-header {
+  background-color: #007bff;
+  color: white;
 }
 
 .chat-messages {
