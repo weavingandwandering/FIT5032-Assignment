@@ -6,7 +6,7 @@ const axios = require("axios");
 
 firebaseAdmin.initializeApp();
 const corsMiddleware = cors({origin: true});
-sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+sgMail.setApiKey(functions.config().sendgrid.key);
 
 exports.scheduleEmail = functions
     .region("australia-southeast1")
@@ -72,9 +72,9 @@ exports.sendEmailsHttp = functions
             subject: "Scheduled Reminder",
             text: message,
             attachments: attachments.map((file) => ({
-              content: file.content, // Base64 content of the file
-              filename: file.filename, // Name of the file
-              type: file.type, // MIME type of the file
+              content: file.content,
+              filename: file.filename,
+              type: file.type,
               disposition: "attachment",
             })),
           };
@@ -82,7 +82,7 @@ exports.sendEmailsHttp = functions
           try {
             await sgMail.send(msg);
             console.log(`Email sent to ${email}`);
-            await doc.ref.delete(); // Deletes the email document after sending
+            await doc.ref.delete();
           } catch (error) {
             console.error("Error sending email:", error);
           }
@@ -167,6 +167,52 @@ exports.processDonation = functions
         } catch (error) {
           console.error("Stripe charge failed:", error);
           return res.status(500).json({success: false, error: error.message});
+        }
+      });
+    });
+
+sgMail.setApiKey(functions.config().sendgrid.key);
+
+exports.sendBulkEmail = functions
+    .region("australia-southeast1")
+    .https.onRequest((req, res) => {
+      corsMiddleware(req, res, async () => {
+        const {eventId, emails} = req.body;
+
+        // Validate input
+        if (!eventId || !Array.isArray(emails) || emails.length === 0) {
+          return res.status(400).send("Invalid eventId or emails");
+        }
+
+        try {
+          console.log("Fetching event with ID:", eventId);
+          const eventSnapshot = await firebaseAdmin.firestore()
+              .collection("events").doc(eventId).get();
+
+          if (!eventSnapshot.exists) {
+            return res.status(404).send("Event not found");
+          }
+
+          const event = eventSnapshot.data();
+          const recipientEmails = emails;
+
+          const msg = {
+            to: recipientEmails,
+            from: "ishitagupta224@gmail.com",
+            subject: `Reminder: ${event.name}`,
+            text: `Reminder for upcoming event: ${event.name} on ${event.date}`,
+            html: `<strong>This is a reminder for upcoming event:</strong><br>
+               <strong>Name:</strong> ${event.name}<br>
+               <strong>Date:</strong> ${event.eventDate}<br>
+               <strong>Description:</strong> ${event.description}<br>
+               <strong>Location:</strong> ${event.location}<br>`,
+          };
+
+          await sgMail.sendMultiple(msg);
+          res.status(200).send("Emails sent");
+        } catch (error) {
+          console.error("Error sending email:", error.message);
+          res.status(500).send("Error sending email");
         }
       });
     });

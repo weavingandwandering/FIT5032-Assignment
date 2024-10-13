@@ -47,11 +47,7 @@
 
       <div v-if="filteredAndSortedEvents.length">
         <div class="row">
-          <div
-            class="col-md-4"
-            v-for="event in filteredAndSortedEvents"
-            :key="event.id"
-          >
+          <div class="col-md-4" v-for="event in filteredAndSortedEvents" :key="event.id">
             <div class="card mb-3 event-card" @click="goToEventDetails(event.id)" role="button" tabindex="0" aria-label="View event details for {{ event.name }}">
               <div class="card-body">
                 <h5 class="card-title">{{ event.name }}</h5>
@@ -95,9 +91,7 @@
         <div class="row">
           <div class="col-md-12">
             <div class="calendar-container">
-              <FullCalendar
-                :options="calendarOptions"
-              />
+              <FullCalendar :options="calendarOptions" />
             </div>
           </div>
         </div>
@@ -124,6 +118,7 @@ const sortOrder = ref('');
 const filterOption = ref('all');
 const activeTab = ref('my');
 const router = useRouter();
+const userName = ref('');
 
 const headerToolbar = {
   left: 'prev,next today',
@@ -143,15 +138,15 @@ const calendarOptions = ref({
 });
 
 const fetchUserEmail = async () => {
-  const userName = localStorage.getItem('currentUser');
-  if (!userName) {
+  userName.value = localStorage.getItem('currentUser'); // Correctly reference the ref
+  if (!userName.value) {
     alert('No username found in localStorage. Please log in.');
     return;
   }
 
   try {
     const usersCollection = collection(db, 'users');
-    const q = query(usersCollection, where('username', '==', userName));
+    const q = query(usersCollection, where('username', '==', userName.value));
     const querySnapshot = await getDocs(q);
 
     if (!querySnapshot.empty) {
@@ -177,7 +172,7 @@ const fetchEvents = async () => {
 };
 
 const isUserRegistered = (event) => {
-  return event.attendees && event.attendees.includes(userEmail.value);
+  return event.attendees && event.attendees.some(attendee => attendee.email === userEmail.value); // Use proper comparison
 };
 
 const register = async (event) => {
@@ -201,10 +196,9 @@ const register = async (event) => {
   try {
     const eventRef = doc(db, 'events', event.id);
     const attendees = event.attendees || [];
-    attendees.push(userEmail.value);
+    attendees.push({ email: userEmail.value, name: userName.value }); // Ensure userName is used correctly
 
     await updateDoc(eventRef, { attendees: attendees });
-    event.attendees = attendees;
     alert('Registration successful!');
     updateCalendar();
   } catch (error) {
@@ -221,11 +215,10 @@ const unregister = async (event) => {
   try {
     const eventRef = doc(db, 'events', event.id);
     const attendees = event.attendees || [];
-    const index = attendees.indexOf(userEmail.value);
+    const index = attendees.findIndex(attendee => attendee.email === userEmail.value); // Use findIndex for object comparison
     if (index > -1) {
       attendees.splice(index, 1);
       await updateDoc(eventRef, { attendees: attendees });
-      event.attendees = attendees;
       alert('Unregistered successfully.');
       updateCalendar();
     }
@@ -247,15 +240,13 @@ const filteredAndSortedEvents = computed(() => {
   filteredEvents.sort((a, b) => {
     const isARegistered = isUserRegistered(a);
     const isBRegistered = isUserRegistered(b);
-    if (isARegistered && !isBRegistered) return 1;
-    if (!isARegistered && isBRegistered) return -1;
-    return 0;
+    return (isARegistered === isBRegistered) ? 0 : (isARegistered ? -1 : 1);
   });
 
   if (sortOrder.value === 'date') {
-    filteredEvents.sort((a, b) => a.eventDate.toDate() - b.eventDate.toDate());
+    return filteredEvents.sort((a, b) => a.eventDate.toDate() - b.eventDate.toDate());
   } else if (sortOrder.value === 'name') {
-    filteredEvents.sort((a, b) => a.name.localeCompare(b.name));
+    return filteredEvents.sort((a, b) => a.name.localeCompare(b.name));
   }
 
   return filteredEvents;
@@ -265,17 +256,12 @@ const myRegisteredEvents = computed(() => {
   return events.value.filter(event => isUserRegistered(event));
 });
 
-const goToEventDetails = (eventId) => {
-  router.push({ name: 'ViewEvent', params: { id: eventId } });
-};
-
 const updateCalendar = () => {
-  const calendarEvents = myRegisteredEvents.value.map(event => ({
-    id: event.id,
+  calendarOptions.value.events = myRegisteredEvents.value.map(event => ({
     title: event.name,
-    start: event.eventDate.toDate(),
+    start: event.eventDate.toDate().toISOString().split('T')[0],
+    id: event.id,
   }));
-  calendarOptions.value.events = calendarEvents;
 };
 
 onMounted(async () => {
@@ -287,15 +273,9 @@ onMounted(async () => {
 <style scoped>
 .event-card {
   cursor: pointer;
-  transition: transform 0.3s;
+  transition: transform 0.2s;
 }
-
 .event-card:hover {
   transform: scale(1.05);
-}
-
-.calendar-container {
-  max-width: 800px;
-  margin: 0 auto;
 }
 </style>

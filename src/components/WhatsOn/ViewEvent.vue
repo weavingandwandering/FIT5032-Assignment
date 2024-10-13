@@ -6,7 +6,7 @@
           <div class="card-body">
             <h2 id="event-title" class="card-title text-primary">{{ event ? event.name : 'Loading...' }}</h2>
             <p class="card-text">
-              <strong>Date:</strong> <span class="text-muted">{{ event && event.date ? event.date.toDate().toLocaleDateString() : 'Loading...' }}</span>
+              <strong>Date:</strong> <span class="text-muted">{{ event && event.eventDate ? event.eventDate.toDate().toLocaleDateString() : 'Loading...' }}</span>
             </p>
             <p class="card-text">
               <strong>Description:</strong> <span class="text-muted">{{ event ? event.description : 'Loading...' }}</span>
@@ -25,14 +25,17 @@
               placeholder="Enter a new location or leave blank for current location"
               aria-label="Enter a new location to get directions"
               v-model="newLocation"
-              ref="locationInput" 
+              ref="locationInput"
               @keyup.enter="updateRoute"
             />
-            <button class="btn btn-primary mt-4" @click="register">Register for Event</button>
-            <div v-if="registrationSuccess" class="alert alert-success mt-2">
+            <div class="mt-4">
+              <button class="btn btn-primary" v-if="!isUserRegistered(event)" @click="register">Register for Event</button>
+              <button class="btn btn-danger" v-else @click="unregister">Unregister from Event</button>
+            </div>
+            <div v-if="registrationSuccess" class="alert alert-success mt-2" role="alert">
               Registration successful! Thank you for signing up.
             </div>
-            <div v-if="registrationError" class="alert alert-danger mt-2">
+            <div v-if="registrationError" class="alert alert-danger mt-2" role="alert">
               An error occurred while registering. Please try again.
             </div>
           </div>
@@ -60,7 +63,7 @@ const newLocation = ref('');
 const route = useRoute();
 const eventId = route.params.id;
 const userEmail = ref('');
-const locationInput = ref(null); // Reference for the input
+const locationInput = ref(null);
 
 const fetchEventDetails = async () => {
   try {
@@ -68,10 +71,10 @@ const fetchEventDetails = async () => {
     const eventSnap = await getDoc(eventRef);
     if (eventSnap.exists()) {
       event.value = {
-        id: eventSnap.id,
+        id: eventId,
         ...eventSnap.data(),
       };
-      initMap(); // Call initMap after fetching event details
+      initMap();
     } else {
       console.error('Event not found');
     }
@@ -144,18 +147,16 @@ const initMap = () => {
       console.error('Geolocation error:', error);
     });
 
-    // Initialize Places Autocomplete
     nextTick(() => {
       const autocomplete = new google.maps.places.Autocomplete(locationInput.value, {
-        types: ['geocode'], // You can adjust this to 'address' or other types
+        types: ['geocode'],
       });
 
-      // Add listener to handle place selection
       autocomplete.addListener('place_changed', () => {
         const place = autocomplete.getPlace();
         if (place.geometry) {
-          newLocation.value = place.formatted_address; // Update input with selected place
-          displayRoute(place.geometry.location); // Show route to the selected place
+          newLocation.value = place.formatted_address;
+          displayRoute(place.geometry.location);
         }
       });
     });
@@ -168,7 +169,7 @@ const updateRoute = () => {
   loader.load().then(() => {
     const geocoder = new google.maps.Geocoder();
 
-    const address = newLocation.value || event.value.location; // Use the new location or event's location
+    const address = newLocation.value || event.value.location;
     geocoder.geocode({ address }, (results, status) => {
       if (status === 'OK' && results[0]) {
         const userLocation = results[0].geometry.location;
@@ -253,15 +254,71 @@ const calculateDistance = (eventLocation) => {
 };
 
 const register = async () => {
-  // Your registration logic here
+  if (!userEmail.value) {
+    alert('Please log in to register for an event.');
+    return;
+  }
+
+  if (!event.value) {
+    console.error('Event details are not loaded yet.');
+    return;
+  }
+
+  try {
+    const eventRef = doc(db, 'events', eventId);
+    await updateDoc(eventRef, {
+      attendees: [...(event.value.attendees || []), userEmail.value],
+    });
+    registrationSuccess.value = true;
+    registrationError.value = false;
+    fetchEventDetails(); // Refresh event details
+  } catch (error) {
+    console.error('Error registering for the event:', error);
+    registrationError.value = true;
+    registrationSuccess.value = false;
+  }
 };
 
-onMounted(() => {
-  fetchEventDetails();
-  fetchUserEmail();
+const unregister = async () => {
+  if (!userEmail.value) {
+    alert('Please log in to unregister from an event.');
+    return;
+  }
+
+  if (!event.value) {
+    console.error('Event details are not loaded yet.');
+    return;
+  }
+
+  try {
+    const eventRef = doc(db, 'events', eventId);
+    const updatedAttendees = (event.value.attendees || []).filter(email => email !== userEmail.value);
+    await updateDoc(eventRef, {
+      attendees: updatedAttendees,
+    });
+    registrationSuccess.value = true;
+    registrationError.value = false;
+    fetchEventDetails(); // Refresh event details
+  } catch (error) {
+    console.error('Error unregistering from the event:', error);
+    registrationError.value = true;
+    registrationSuccess.value = false;
+  }
+};
+
+const isUserRegistered = (event) => {
+  return event && (event.attendees || []).includes(userEmail.value);
+};
+
+onMounted(async () => {
+  await fetchUserEmail();
+  await fetchEventDetails();
 });
 </script>
 
 <style scoped>
-/* Add your styles here */
+.container {
+  max-width: 1200px;
+  margin: auto;
+}
 </style>
