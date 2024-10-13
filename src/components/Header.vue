@@ -34,7 +34,6 @@
             </ul>
           </li>
 
-          <!-- What's On Dropdown for Elderly -->
           <li class="nav-item dropdown" @click="toggleDropdown('whatsOnElderlyDropdown')">
             <a class="nav-link dropdown-toggle" v-if="userRole === 'Elderly'" role="button" :aria-expanded="isOpen.whatsOnElderlyDropdown">What's On</a>
             <ul v-if="isOpen.whatsOnElderlyDropdown" class="dropdown-menu">
@@ -44,7 +43,6 @@
             </ul>
           </li>
 
-          <!-- What's On Dropdown for Volunteer -->
           <li class="nav-item dropdown" @click="toggleDropdown('whatsOnVolunteerDropdown')">
             <a class="nav-link dropdown-toggle" v-if="userRole === 'Volunteer'" role="button" :aria-expanded="isOpen.whatsOnVolunteerDropdown">What's On</a>
             <ul v-if="isOpen.whatsOnVolunteerDropdown" class="dropdown-menu">
@@ -53,13 +51,11 @@
             </ul>
           </li>
 
-          <!-- Get Involved Dropdown -->
           <li class="nav-item dropdown" @click="toggleDropdown('getInvolvedDropdown')">
             <a class="nav-link dropdown-toggle" role="button" :aria-expanded="isOpen.getInvolvedDropdown">Get Involved</a>
             <ul v-if="isOpen.getInvolvedDropdown" class="dropdown-menu">
               <li><router-link to="/donation" class="dropdown-item">Donation</router-link></li>
-              <li><router-link to="/volunteering" class="dropdown-item">Volunteering</router-link></li>
-              <li><router-link to="/statistics" class="dropdown-item">View Chart</router-link></li>
+              <li><router-link to="/statistics" v-if="userRole === 'Volunteer'" class="dropdown-item">View Chart</router-link></li>
             </ul>
           </li>
 

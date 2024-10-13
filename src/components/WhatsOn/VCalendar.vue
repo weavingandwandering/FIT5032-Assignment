@@ -37,14 +37,32 @@
         class="form-control mb-3" 
       />
 
+      <div class="row mb-3">
+        <div class="col-md-4">
+          <label for="sortKey">Sort By:</label>
+          <select id="sortKey" v-model="sortKey" class="form-select" @change="sortTable(sortKey)">
+            <option value="">Select</option>
+            <option value="name">Event Name</option>
+            <option value="date">Date</option>
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label for="sortDirection">Order:</label>
+          <select id="sortDirection" v-model="sortDirection" class="form-select" @change="sortTable(sortKey)">
+            <option value="asc">Ascending</option>
+            <option value="desc">Descending</option>
+          </select>
+        </div>
+      </div>
+
       <table class="table table-bordered">
         <thead>
           <tr>
-            <th scope="col" @click="sortTable('name')" style="cursor: pointer;" tabindex="0" @keydown.enter="sortTable('name')">
+            <th scope="col" tabindex="0" @keydown.enter="sortTable('name')">
               Event Name 
               <span v-if="sortKey === 'name'">{{ sortDirection === 'asc' ? '↑' : '↓' }}</span>
             </th>
-            <th scope="col" @click="sortTable('date')" style="cursor: pointer;" tabindex="0" @keydown.enter="sortTable('date')">
+            <th scope="col" tabindex="0" @keydown.enter="sortTable('date')">
               Date 
               <span v-if="sortKey === 'date'">{{ sortDirection === 'asc' ? '↑' : '↓' }}</span>
             </th>
@@ -68,6 +86,7 @@
     </div>
   </div>
 </template>
+
 
 <script>
 import FullCalendar from '@fullcalendar/vue3';
@@ -110,19 +129,19 @@ export default {
     });
 
     const sortTable = (key) => {
-      sortDirection.value = (sortKey.value === key && sortDirection.value === 'asc') ? 'desc' : 'asc';
-      sortKey.value = key;
-      events.value.sort((a, b) => {
-        if (key === 'date') {
-          return sortDirection.value === 'asc' 
-            ? a[eventDate].toDate() - b[eventDate].toDate() 
-            : b[eventDate].toDate() - a[eventDate].toDate();
-        } else {
-          return sortDirection.value === 'asc' 
-            ? a[key].localeCompare(b[key]) 
-            : b[key].localeCompare(a[key]);
-        }
-      });
+      if (key) {
+        events.value.sort((a, b) => {
+          if (key === 'date') {
+            return sortDirection.value === 'asc' 
+              ? a.eventDate.toDate() - b.eventDate.toDate() 
+              : b.eventDate.toDate() - a.eventDate.toDate();
+          } else {
+            return sortDirection.value === 'asc' 
+              ? a[key].localeCompare(b[key]) 
+              : b[key].localeCompare(a[key]);
+          }
+        });
+      }
     };
 
     const fetchEvents = async () => {
@@ -213,10 +232,10 @@ export default {
 .container {
   max-width: 800px;
   margin: 0 auto;
-  background-color: #ffffff; /* White background for a clean look */
+  background-color: #ffffff; 
   padding: 20px;
-  border-radius: 12px; /* Slightly rounded corners */
-  box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1); /* Softer shadow */
+  border-radius: 12px;
+  box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1); 
 }
 
 .view-toggle {
@@ -227,22 +246,22 @@ export default {
 
 .view-toggle .btn {
   padding: 10px 20px;
-  background-color: #0a7fe6; /* Muted gray for buttons */
+  background-color: #0a7fe6; 
   color: white;
   border: none;
   border-radius: 5px;
   cursor: pointer;
-  transition: background-color 0.3s ease, transform 0.2s; /* Added transformation */
+  transition: background-color 0.3s ease, transform 0.2s; 
 }
 
 .view-toggle .btn:hover,
 .view-toggle .btn:focus {
-  background-color: #5a6268; /* Darker gray on hover */
-  transform: scale(1.05); /* Slightly enlarge on hover */
+  background-color: #5a6268;
+  transform: scale(1.05); 
 }
 
 .view-toggle .btn.active {
-  background-color: #5a6268; /* Active button color */
+  background-color: #5a6268;
 }
 
 .row {
@@ -252,15 +271,15 @@ export default {
 .event-item {
   margin-top: 15px;
   padding: 15px;
-  border: 1px solid #dee2e6; /* Light gray border */
-  border-radius: 8px; /* More rounded corners */
-  background-color: #a8d3ff; /* Very light gray background for events */
-  transition: background-color 0.3s ease; /* Smooth background change */
+  border: 1px solid #dee2e6; 
+  border-radius: 8px; 
+  background-color: #a8d3ff; 
+  transition: background-color 0.3s ease; 
 }
 
 .event-item:hover,
 .event-item:focus {
-  background-color: #e9ecef; /* Slightly darker gray on hover/focus */
+  background-color: #e9ecef;
 }
 
 .pagination {
@@ -271,18 +290,18 @@ export default {
 
 .pagination button {
   padding: 8px 16px;
-  background-color: #17a2b8; /* Muted teal color for pagination */
+  background-color: #17a2b8; 
   color: white;
   border: none;
   border-radius: 5px;
   cursor: pointer;
-  transition: background-color 0.3s ease, transform 0.2s; /* Added transformation */
+  transition: background-color 0.3s ease, transform 0.2s; 
 }
 
 .pagination button:hover,
 .pagination button:focus {
-  background-color: #138496; /* Darker teal on hover */
-  transform: scale(1.05); /* Slightly enlarge on hover */
+  background-color: #138496; 
+  transform: scale(1.05); 
 }
 
 table {
@@ -292,7 +311,7 @@ table {
 }
 
 th {
-  background-color: #6c757d; /* Muted gray header */
+  background-color: #6c757d;
   color: white;
   padding: 12px;
   text-align: left;
@@ -300,10 +319,10 @@ th {
 
 td {
   padding: 12px;
-  border: 1px solid #dee2e6; /* Light gray border for cells */
+  border: 1px solid #dee2e6; 
 }
 
 td:hover {
-  background-color: #f1f1f1; /* Very light gray on hover */
+  background-color: #f1f1f1; 
 }
 </style>
