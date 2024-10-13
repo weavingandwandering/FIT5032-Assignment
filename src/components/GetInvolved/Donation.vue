@@ -29,12 +29,12 @@
           <div class="mb-3">
             <label for="donationAmount" class="form-label">Donation Amount</label>
             <input
-              v-model="donor.amount"
+              v-model.number="donor.amount" 
               type="number"
               id="donationAmount"
               class="form-control"
               required
-              min="1"
+              step="0.01"
               aria-label="Donation Amount"
             />
           </div>
@@ -49,7 +49,6 @@
             >
               <option value="" disabled>Select payment method</option>
               <option value="credit_card">Credit Card</option>
-              <option value="paypal">PayPal</option>
             </select>
           </div>
           <button
@@ -83,8 +82,10 @@
                   class="form-control"
                   required
                   aria-label="Card Number"
+                  @blur="validateCardNumber"
                 />
               </div>
+              <div v-if="cardNumberError" class="alert alert-danger">{{ cardNumberError }}</div>
               <div class="mb-3">
                 <label for="cardExpiry" class="form-label">Expiry Date (MM/YY)</label>
                 <input
@@ -95,8 +96,10 @@
                   required
                   placeholder="MM/YY"
                   aria-label="Card Expiry Date"
+                  @blur="validateExpiry"
                 />
               </div>
+              <div v-if="expiryError" class="alert alert-danger">{{ expiryError }}</div>
               <div class="mb-3">
                 <label for="cardCVC" class="form-label">CVC</label>
                 <input
@@ -106,8 +109,10 @@
                   class="form-control"
                   required
                   aria-label="Card CVC"
+                  @blur="validateCVC"
                 />
               </div>
+              <div v-if="cvcError" class="alert alert-danger">{{ cvcError }}</div>
               <button type="submit" class="btn btn-primary w-100" aria-label="Submit Payment">Submit Payment</button>
             </form>
             <div v-if="message" class="alert mt-3" :class="alertClass">{{ message }}</div>
@@ -132,9 +137,60 @@ const alertClass = ref('');
 const showModal = ref(false);
 const router = useRouter();
 
+const cardNumberError = ref('');
+const expiryError = ref('');
+const cvcError = ref('');
+
 const isPaymentMethodValid = computed(() => {
   return donor.value.paymentMethod === 'credit_card';
 });
+
+// Validate credit card number using Luhn algorithm
+const validateCardNumber = () => {
+  const value = creditCard.value.number.replace(/\s/g, '');
+  const regex = /^[0-9]{13,19}$/; // Validate length and digits
+  if (!regex.test(value) || !luhnCheck(value)) {
+    cardNumberError.value = 'Invalid card number.';
+  } else {
+    cardNumberError.value = '';
+  }
+};
+
+// Luhn algorithm check
+const luhnCheck = (cardNumber) => {
+  let sum = 0;
+  let shouldDouble = false;
+  for (let i = cardNumber.length - 1; i >= 0; i--) {
+    let digit = parseInt(cardNumber.charAt(i), 10);
+    if (shouldDouble) {
+      digit *= 2;
+      if (digit > 9) digit -= 9;
+    }
+    sum += digit;
+    shouldDouble = !shouldDouble;
+  }
+  return sum % 10 === 0;
+};
+
+const validateExpiry = () => {
+  const [month, year] = creditCard.value.expiry.split('/').map((el) => el.trim());
+  const now = new Date();
+  const expiryDate = new Date(`20${year}`, month - 1); // Convert to Date object
+  if (!month || !year || expiryDate < now) {
+    expiryError.value = 'Invalid expiry date.';
+  } else {
+    expiryError.value = '';
+  }
+};
+
+const validateCVC = () => {
+  const regex = /^[0-9]{3,4}$/; // Validate 3 or 4 digits
+  if (!regex.test(creditCard.value.cvc)) {
+    cvcError.value = 'Invalid CVC.';
+  } else {
+    cvcError.value = '';
+  }
+};
 
 const openModal = () => {
   if (donor.value.paymentMethod === 'credit_card') {
@@ -156,14 +212,21 @@ const reroute = (id) => {
       id: id,
       name: donor.value.name,
       email: donor.value.email,
-      amount: donor.value.amount * 100,
+      amount: donor.value.amount * 100, 
       paymentMethod: donor.value.paymentMethod,
     },
   });
 };
 
 const submitDonation = async () => {
+  if (cardNumberError.value || expiryError.value || cvcError.value) {
+    message.value = 'Please fix the errors before submitting.';
+    alertClass.value = 'alert-danger';
+    return;
+  }
+
   try {
+    donor.value.amount = donor.value.amount * 100 
     const response = await fetch('https://australia-southeast1-ishita-assignment3.cloudfunctions.net/processDonation', {
       method: 'POST',
       headers: {
@@ -171,7 +234,7 @@ const submitDonation = async () => {
       },
       body: JSON.stringify({
         ...donor.value,
-        source: creditCard.value.number,  
+        source: creditCard.value.number,
       }),
     });
 
@@ -186,17 +249,17 @@ const submitDonation = async () => {
         paymentMethod: donor.value.paymentMethod,
         timestamp: Timestamp.now(),
       });
-      
-      donor.value = { name: '', email: '', amount: '', paymentMethod: '' }; 
-      creditCard.value = { number: '', expiry: '', cvc: '' }; 
+
+      donor.value = { name: '', email: '', amount: '', paymentMethod: '' };
+      creditCard.value = { number: '', expiry: '', cvc: '' };
       reroute(docRef.id);
-      
     } else {
       message.value = result.error || 'Something went wrong. Please try again.';
       alertClass.value = 'alert-danger';
     }
   } catch (error) {
-    message.value = 'Error connecting to server. Please try again later.';
+    console.error('Error:', error);
+    message.value = 'An error occurred while processing your donation.';
     alertClass.value = 'alert-danger';
   }
 };
