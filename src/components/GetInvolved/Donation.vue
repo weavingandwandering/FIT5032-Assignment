@@ -237,6 +237,7 @@ const submitDonation = async () => {
         source: creditCard.value.number,
       }),
     });
+    donor.value.amount = donor.value.amount / 100
 
     const result = await response.json();
     if (response.ok) {
