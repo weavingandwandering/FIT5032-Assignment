@@ -20,17 +20,15 @@
             <a class="nav-link dropdown-toggle" role="button" :aria-expanded="isOpen.resourcesDropdown">Resources</a>
             <ul v-if="isOpen.resourcesDropdown" class="dropdown-menu">
               <li><router-link to="/videos" class="dropdown-item">Checklist</router-link></li>
-              <li><router-link to="/health-checklist" class="dropdown-item">Custom Reminder</router-link></li>
-              <li><router-link to="/articles" class="dropdown-item">Custee</router-link></li>
+              <li><router-link to="/health-checklist" v-if="currentUser" class="dropdown-item">Custom Reminder</router-link></li>
             </ul>
           </li>
 
-          <!-- Community Space Dropdown -->
           <li class="nav-item dropdown" @click="toggleDropdown('communityDropdown')">
             <a class="nav-link dropdown-toggle" role="button" :aria-expanded="isOpen.communityDropdown">Community Space</a>
             <ul v-if="isOpen.communityDropdown" class="dropdown-menu">
               <li><router-link to="/forum" class="dropdown-item">Community Forum</router-link></li>
-              <li><router-link to="/chatbot" class="dropdown-item">Chatbot</router-link></li>
+              <li><router-link to="/chatbot"  v-if="currentUser" class="dropdown-item">Chatbot</router-link></li>
             </ul>
           </li>
 

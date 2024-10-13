@@ -52,6 +52,8 @@ const routes = [
     path: '/newpost',
     name: 'NewPost',
     component: NewPost,
+    meta: { requiresAuth: true }
+
   },
   {
     path: '/viewpost:id',
@@ -84,11 +86,13 @@ const routes = [
     path: '/health-checklist',
     name: 'Checklist',
     component: Checklist,
+    meta: { requiresAuth: true },
   },
   {
     path: '/chatbot',
     name: 'Chatbot',
     component: Chatbot,
+    meta: { requiresAuth: true },
   },
   {
     path: '/donation',
@@ -172,9 +176,31 @@ router.beforeEach(async (to, from, next) => {
         next({ name: 'Login' });
       }
     }
+  } else if (to.meta.requiresAuth) {
+    console.log(!user)
+    if (user === "null") {
+      console.log("Here")
+      next({ name: 'Login' }); 
+    } else {
+      next();
+    }
   } else {
     next();
   }
 });
 
+
+router.beforeEach(async (to, from, next) => {
+  const user = localStorage.getItem('currentUser');
+  
+  if (to.meta.requiresAuth) {
+    if (!user) {
+      next({ name: 'Login' }); 
+    } else {
+      next();
+    }
+  } else {
+    next();
+  }
+});
 export default router;
