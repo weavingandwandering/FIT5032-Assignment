@@ -116,54 +116,51 @@ const initMap = () => {
     const geocoder = new google.maps.Geocoder();
     const eventLocation = event.value.location;
 
-    navigator.geolocation.getCurrentPosition((position) => {
-      const userLocation = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
-      geocoder.geocode({ address: eventLocation }, (results, status) => {
-        if (status === 'OK' && results[0]) {
-          const map = new google.maps.Map(document.getElementById('map'), {
-            zoom: 15,
-            center: userLocation,
-          });
+    geocoder.geocode({ address: eventLocation }, (results, status) => {
+      if (status === 'OK' && results[0]) {
+        const map = new google.maps.Map(document.getElementById('map'), {
+          zoom: 15,
+          center: results[0].geometry.location,
+        });
 
-          new google.maps.Marker({
-            position: userLocation,
-            map: map,
-            title: 'Your Location',
-          });
+        new google.maps.Marker({
+          position: results[0].geometry.location,
+          map: map,
+          title: event.value.name,
+        });
 
-          new google.maps.Marker({
-            position: results[0].geometry.location,
-            map: map,
-            title: event.value.name,
-          });
+        if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(
+            (position) => {
+              const userLocation = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
 
-          getDirections(userLocation, results[0].geometry.location, map);
-          calculateDistance(results[0].geometry.location);
+              new google.maps.Marker({
+                position: userLocation,
+                map: map,
+                title: 'Your Location',
+              });
+
+              // Get directions and calculate distance only if the user's location is available
+              getDirections(userLocation, results[0].geometry.location, map);
+              calculateDistance(results[0].geometry.location);
+            },
+            (error) => {
+              console.error('Geolocation error:', error);
+              // Geolocation failed, but still display the event location
+            }
+          );
         } else {
-          console.error('Geocode was not successful for the following reason: ' + status);
+          console.log('Geolocation is not supported by this browser.');
         }
-      });
-    }, (error) => {
-      console.error('Geolocation error:', error);
-    });
-
-    nextTick(() => {
-      const autocomplete = new google.maps.places.Autocomplete(locationInput.value, {
-        types: ['geocode'],
-      });
-
-      autocomplete.addListener('place_changed', () => {
-        const place = autocomplete.getPlace();
-        if (place.geometry) {
-          newLocation.value = place.formatted_address;
-          displayRoute(place.geometry.location);
-        }
-      });
+      } else {
+        console.error('Geocode was not successful for the following reason: ' + status);
+      }
     });
   }).catch(e => {
     console.error('Error loading Google Maps:', e);
   });
 };
+
 
 const updateRoute = () => {
   loader.load().then(() => {

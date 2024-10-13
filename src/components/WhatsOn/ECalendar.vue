@@ -52,7 +52,7 @@ const nearbyEvents = ref([]);
 const userLocation = ref(null);
 const markers = [];
 let map = null;
-const distance = ref(1); 
+const distance = ref(0); 
 
 const goToEventDetails = (eventId) => {
   router.push({ name: 'ViewEvent', params: { id: eventId } });
@@ -65,21 +65,30 @@ const fetchEvents = async () => {
 };
 
 const fetchUserLocation = () => {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(position => {
-        userLocation.value = {
-          lat: position.coords.latitude,
-          lng: position.coords.longitude,
-        };
-        resolve();
-      }, () => {
-        alert('Error: The Geolocation service failed. Please enable location services.');
-        reject();
-      });
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          userLocation.value = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          };
+          resolve();
+        },
+        (error) => {
+          userLocation.value = {
+            lat: -37.8134,
+            lng: 144.9631
+          };
+          resolve();
+        }
+      );
     } else {
-      alert('Error: Your browser doesn\'t support geolocation.');
-      reject();
+      userLocation.value = {
+        lat: 37.9016,
+        lng: 145.1155
+      };
+      resolve(); 
     }
   });
 };

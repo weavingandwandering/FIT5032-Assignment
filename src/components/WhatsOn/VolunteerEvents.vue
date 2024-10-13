@@ -65,7 +65,7 @@
   });
   
   const goToAttendance = (eventId) => {
-    router.push(`/viewAttendance/${eventId}`);
-  };
+    router.push({ name: 'ViewAttendance', params: { id: eventId } });
+};
   </script>
   
