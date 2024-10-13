@@ -64,7 +64,7 @@ const exportAsPDF = () => {
   doc.setFontSize(12); 
   doc.text(`Name: ${donor.value.name}`, 20, 30);
   doc.text(`Email: ${donor.value.email}`, 20, 40);
-  doc.text(`Donation Amount: $${(donor.value.amount / 100).toFixed(2)}`, 20, 50);
+  doc.text(`Donation Amount: $${(donor.value.amount).toFixed(2)}`, 20, 50);
   doc.text(`Payment Method: ${donor.value.paymentMethod}`, 20, 60);
   doc.setFontSize(14); 
   doc.text("Thank you for your generous donation!", 20, 80);

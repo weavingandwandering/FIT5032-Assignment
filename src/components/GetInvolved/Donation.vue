@@ -145,10 +145,9 @@ const isPaymentMethodValid = computed(() => {
   return donor.value.paymentMethod === 'credit_card';
 });
 
-// Validate credit card number using Luhn algorithm
 const validateCardNumber = () => {
   const value = creditCard.value.number.replace(/\s/g, '');
-  const regex = /^[0-9]{13,19}$/; // Validate length and digits
+  const regex = /^[0-9]{13,19}$/; 
   if (!regex.test(value) || !luhnCheck(value)) {
     cardNumberError.value = 'Invalid card number.';
   } else {
@@ -175,7 +174,7 @@ const luhnCheck = (cardNumber) => {
 const validateExpiry = () => {
   const [month, year] = creditCard.value.expiry.split('/').map((el) => el.trim());
   const now = new Date();
-  const expiryDate = new Date(`20${year}`, month - 1); // Convert to Date object
+  const expiryDate = new Date(`20${year}`, month - 1); 
   if (!month || !year || expiryDate < now) {
     expiryError.value = 'Invalid expiry date.';
   } else {
@@ -184,7 +183,7 @@ const validateExpiry = () => {
 };
 
 const validateCVC = () => {
-  const regex = /^[0-9]{3,4}$/; // Validate 3 or 4 digits
+  const regex = /^[0-9]{3,4}$/;
   if (!regex.test(creditCard.value.cvc)) {
     cvcError.value = 'Invalid CVC.';
   } else {
