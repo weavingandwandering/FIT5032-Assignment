@@ -10,49 +10,60 @@
       </button>
 
       <div class="collapse navbar-collapse" id="navbarContent">
-        <div class="collapse navbar-collapse" id="navbarContent">
         <ul class="navbar-nav ms-auto me-auto">
           <li class="nav-item">
             <router-link to="/about" class="nav-link" active-class="active">About Us</router-link>
           </li>
 
+          <!-- Resources Dropdown -->
           <li class="nav-item dropdown" @click="toggleDropdown('resourcesDropdown')">
-            <a class="nav-link dropdown-toggle" role="button" aria-expanded="isOpen.resourcesDropdown">Resources</a>
+            <a class="nav-link dropdown-toggle" role="button" :aria-expanded="isOpen.resourcesDropdown">Resources</a>
             <ul v-if="isOpen.resourcesDropdown" class="dropdown-menu">
               <li><router-link to="/videos" class="dropdown-item">Checklist</router-link></li>
               <li><router-link to="/health-checklist" class="dropdown-item">Custom Reminder</router-link></li>
               <li><router-link to="/articles" class="dropdown-item">Custee</router-link></li>
-
             </ul>
           </li>
 
+          <!-- Community Space Dropdown -->
           <li class="nav-item dropdown" @click="toggleDropdown('communityDropdown')">
-            <a class="nav-link dropdown-toggle" role="button" aria-expanded="isOpen.communityDropdown">Community Space</a>
+            <a class="nav-link dropdown-toggle" role="button" :aria-expanded="isOpen.communityDropdown">Community Space</a>
             <ul v-if="isOpen.communityDropdown" class="dropdown-menu">
               <li><router-link to="/forum" class="dropdown-item">Community Forum</router-link></li>
               <li><router-link to="/chatbot" class="dropdown-item">Chatbot</router-link></li>
             </ul>
           </li>
 
-          <li class="nav-item dropdown" @click="toggleDropdown('whatsOnDropdown')">
-            <a class="nav-link dropdown-toggle" role="button" aria-expanded="isOpen.whatsOnDropdown">What's On</a>
-            <ul v-if="isOpen.whatsOnDropdown" class="dropdown-menu">
-              <li><router-link to="/ecalendar" class="dropdown-item">Nearby Events </router-link></li>
+          <!-- What's On Dropdown for Elderly -->
+          <li class="nav-item dropdown" @click="toggleDropdown('whatsOnElderlyDropdown')">
+            <a class="nav-link dropdown-toggle" v-if="userRole === 'Elderly'" role="button" :aria-expanded="isOpen.whatsOnElderlyDropdown">What's On</a>
+            <ul v-if="isOpen.whatsOnElderlyDropdown" class="dropdown-menu">
+              <li><router-link to="/ecalendar" class="dropdown-item">Nearby Events</router-link></li>
               <li><router-link to="/registration" class="dropdown-item">Registration</router-link></li>
               <li><router-link to="/vcalendar" class="dropdown-item">Events</router-link></li>
+            </ul>
+          </li>
+
+          <!-- What's On Dropdown for Volunteer -->
+          <li class="nav-item dropdown" @click="toggleDropdown('whatsOnVolunteerDropdown')">
+            <a class="nav-link dropdown-toggle" v-if="userRole === 'Volunteer'" role="button" :aria-expanded="isOpen.whatsOnVolunteerDropdown">What's On</a>
+            <ul v-if="isOpen.whatsOnVolunteerDropdown" class="dropdown-menu">
+              <li><router-link to="/volunteerevents" class="dropdown-item">Events</router-link></li>
               <li><router-link to="/eventcreate" class="dropdown-item">Host an Event</router-link></li>
             </ul>
           </li>
 
+          <!-- Get Involved Dropdown -->
           <li class="nav-item dropdown" @click="toggleDropdown('getInvolvedDropdown')">
-            <a class="nav-link dropdown-toggle" role="button" aria-expanded="isOpen.getInvolvedDropdown">Get Involved</a>
+            <a class="nav-link dropdown-toggle" role="button" :aria-expanded="isOpen.getInvolvedDropdown">Get Involved</a>
             <ul v-if="isOpen.getInvolvedDropdown" class="dropdown-menu">
               <li><router-link to="/donation" class="dropdown-item">Donation</router-link></li>
               <li><router-link to="/volunteering" class="dropdown-item">Volunteering</router-link></li>
               <li><router-link to="/statistics" class="dropdown-item">View Chart</router-link></li>
             </ul>
-            </li>
-           
+          </li>
+
+          <!-- Login/Logout -->
           <li class="nav-item" v-if="currentUser === null">
             <router-link to="/login" class="nav-link" active-class="active">Login</router-link>
           </li>
@@ -68,10 +79,10 @@
           </li>
         </ul>
       </div>
-      </div>
     </div>
   </header>
 </template>
+
 <script setup>
 import { ref, watch, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
@@ -124,6 +135,7 @@ const toggleDropdown = (dropdown) => {
 
 const logout = () => {
   auth.signOut();
+  localStorage.setItem("currentUser", null);
   router.push('/about'); 
 };
 </script>

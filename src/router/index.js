@@ -20,6 +20,7 @@ import ViewEvent from '@/components/WhatsOn/ViewEvent.vue';
 import Registration from '@/components/WhatsOn/Registration.vue';
 import Statistics from '@/components/GetInvolved/Statistics.vue';
 import ViewAttendance from '@/components/WhatsOn/ViewAttendance.vue';
+import VolunteerEvents from '@/components/WhatsOn/VolunteerEvents.vue';
 
 const routes = [
   {
@@ -61,11 +62,13 @@ const routes = [
     path: '/ecalendar',
     component: ECalendar,
     name: 'ECalendar',
+    meta: { requiresRole: 'Elderly' },
   },
   {
     path: '/vcalendar',
     name: 'VCalendar',
     component: VCalendar,
+    meta: { requiresRole: 'Elderly' },
   },
   {
     path: '/videos',
@@ -107,11 +110,15 @@ const routes = [
     path: '/viewevent:id',
     name: 'ViewEvent',
     component: ViewEvent,
+    meta: { requiresRole: 'Elderly' },
+
   },
   {
     path: '/registration',
     name: 'Registration',
     component: Registration,
+    meta: { requiresRole: 'Elderly' },
+
   },
   {
     path: '/statistics',
@@ -122,6 +129,15 @@ const routes = [
     path: '/viewattendance:id',
     name: 'ViewAttendance',
     component: ViewAttendance,
+    meta: { requiresRole: 'Volunteer' },
+
+  },
+  {
+    path: '/volunteerevents',
+    name: 'VolunteerEvents',
+    component: VolunteerEvents,
+    meta: { requiresRole: 'Volunteer' },
+
   },
 ];
 
@@ -132,8 +148,9 @@ const router = createRouter({
 
 router.beforeEach(async (to, from, next) => {
   const user = localStorage.getItem('currentUser');
-
+  console.log(user)
   if (to.meta.requiresRole) {
+    console.log("Here")
     if (!user) {
       next({ name: 'Login' });
     } else {
