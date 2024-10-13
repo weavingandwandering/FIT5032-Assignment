@@ -109,7 +109,7 @@ const sendMessage = async () => {
     messages.value.push({ text: 'An error occurred while sending your message.', isUser: false });
   }
 };
-
+//setting prompts 
 const getDynamicPrompts = () => {
   switch (conversationContext.value) {
     case 'joke':
@@ -140,7 +140,7 @@ const getDynamicPrompts = () => {
       ];
   }
 };
-
+//starting chat for the AI chatbot
 const initializeChat = () => {
   messages.value.push({ text: `Hey ${localStorage.getItem('currentUser')}, how can I help you today?`, isUser: false });
 }

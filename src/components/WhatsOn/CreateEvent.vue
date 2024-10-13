@@ -70,7 +70,7 @@ const newEvent = ref({ name: '', eventDate: '', startTime: '', endTime: '', dura
 const userName = ref(''); 
 const predictions = ref([]); 
 let autocompleteService = null;
-
+//creates an event 
 const createEvent = async () => {
   try {
     const eventDate = Timestamp.fromDate(new Date(newEvent.value.eventDate));
@@ -91,7 +91,7 @@ const createEvent = async () => {
     console.error('Error adding event:', error);
   }
 };
-
+//calculates the duaration of the evnt 
 const calculateDuration = () => {
   if (newEvent.value.startTime && newEvent.value.endTime) {
     const start = new Date(`1970-01-01T${newEvent.value.startTime}:00Z`);

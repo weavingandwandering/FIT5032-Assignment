@@ -56,7 +56,7 @@ onMounted(() => {
 const goBack = () => {
   router.push('/');
 };
-
+//using jspdf to import as pdf
 const exportAsPDF = () => {
   const doc = new jsPDF();
   doc.setFontSize(16);
@@ -70,7 +70,7 @@ const exportAsPDF = () => {
   doc.text("Thank you for your generous donation!", 20, 80);
   doc.save('donation_receipt.pdf');
 };
-
+//using export as csv
 const exportAsCSV = () => {
   const csvContent = `data:text/csv;charset=utf-8,Name,Email,Donation Amount,Payment Method\n${donor.value.name},${donor.value.email},$${(donor.value.amount / 100).toFixed(2)},${donor.value.paymentMethod}`;
   const encodedUri = encodeURI(csvContent);

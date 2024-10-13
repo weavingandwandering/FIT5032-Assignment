@@ -170,7 +170,7 @@ const luhnCheck = (cardNumber) => {
   }
   return sum % 10 === 0;
 };
-
+//checking whether the expiry date is correct
 const validateExpiry = () => {
   const [month, year] = creditCard.value.expiry.split('/').map((el) => el.trim());
   const now = new Date();
@@ -181,7 +181,7 @@ const validateExpiry = () => {
     expiryError.value = '';
   }
 };
-
+//using regex to validate CVV
 const validateCVC = () => {
   const regex = /^[0-9]{3,4}$/;
   if (!regex.test(creditCard.value.cvc)) {
@@ -190,7 +190,7 @@ const validateCVC = () => {
     cvcError.value = '';
   }
 };
-
+//opening modal
 const openModal = () => {
   if (donor.value.paymentMethod === 'credit_card') {
     showModal.value = true;
@@ -198,12 +198,12 @@ const openModal = () => {
     submitDonation();
   }
 };
-
+//close the modal
 const closeModal = () => {
   showModal.value = false;
   message.value = '';
 };
-
+//reroute to receipt
 const reroute = (id) => {
   router.push({
     path: '/volunteering',

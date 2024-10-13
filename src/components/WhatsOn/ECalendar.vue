@@ -63,7 +63,7 @@ const fetchEvents = async () => {
   const eventsSnapshot = await getDocs(eventsCollection);
   events.value = eventsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 };
-
+//gets the users current location 
 const fetchUserLocation = () => {
   return new Promise((resolve) => {
     if (navigator.geolocation) {
@@ -92,7 +92,7 @@ const fetchUserLocation = () => {
     }
   });
 };
-
+//intiialises map for the page
 const initMap = () => {
   if (!userLocation.value || !events.value.length) return;
 

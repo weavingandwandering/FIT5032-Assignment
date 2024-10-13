@@ -65,7 +65,7 @@ const router = useRouter();
 const db = getFirestore();
 const reminders = ref([]);
 const error = ref(null);
-
+// gets the reminders
 const fetchReminders = async () => {
   try {
     const tipsCollection = collection(db, 'tips');
@@ -78,7 +78,7 @@ const fetchReminders = async () => {
     error.value = 'Failed to fetch reminders.';
   }
 };
-
+// marks reminders as completed
 const markAsCompleted = async (reminderId, completed) => {
   try {
     const reminderDoc = doc(db, 'tips', reminderId);

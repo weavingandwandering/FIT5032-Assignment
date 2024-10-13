@@ -96,7 +96,7 @@ const posts = ref([])
 const globalSearch = ref('')
 const searchColumn = ref('all')
 const sortBy = ref('postNumber')
-const sortOrder = ref('desc') // Track the sorting order (asc/desc)
+const sortOrder = ref('desc') 
 const currentPage = ref(1)
 const rowsPerPage = 10
 const roles = ref({})
@@ -107,6 +107,7 @@ const newPost = () => {
   router.push('/newpost')
 }
 
+//gets the post from the database 
 const fetchPosts = async () => {
   const postsCollection = collection(db, 'posts')
   const postsSnapshot = await getDocs(postsCollection)
@@ -121,7 +122,7 @@ const fetchPosts = async () => {
   posts.value = postsData
   fetchRoles()
 }
-
+//get the role from the user from the database
 const fetchRoles = async () => {
   const uniqueUsers = [...new Set(posts.value.map((post) => post.currentuser))]
   for (const username of uniqueUsers) {
@@ -131,7 +132,7 @@ const fetchRoles = async () => {
     }
   }
 }
-
+//redirects when clicked on post 
 const viewPost = (postId) => {
   router.push({ name: 'ViewPost', params: { id: postId } })
 }
@@ -149,7 +150,7 @@ const sortTable = (key) => {
     sortOrder.value = 'asc' // Reset to ascending for a new column
   }
 }
-
+//filtering for posts
 const filteredPosts = computed(() => {
   let filtered = posts.value
 
@@ -165,7 +166,7 @@ const filteredPosts = computed(() => {
 
   return filtered
 })
-
+//sorting posts
 const sortedPosts = computed(() => {
   const sorted = [...filteredPosts.value]
   if (sortBy.value) {
@@ -181,7 +182,7 @@ const sortedPosts = computed(() => {
   }
   return sorted
 })
-
+//paging the posts
 const paginatedPosts = computed(() => {
   const start = (currentPage.value - 1) * rowsPerPage
   return sortedPosts.value.slice(start, start + rowsPerPage)
@@ -196,6 +197,8 @@ const nextPage = () => {
 const prevPage = () => {
   if (currentPage.value > 1) currentPage.value--
 }
+
+//gettingt the rating to be displayed
 const getRating = async (postId) => {
   try {
     const ratingDocRef = doc(db, 'ratings', postId) 
@@ -221,6 +224,8 @@ const getRating = async (postId) => {
     return [0, 0] 
   }
 }
+
+//getting the role of the user
 const getRole = async (usernameFromLocalStorage) => {
   try {
     if (usernameFromLocalStorage) {

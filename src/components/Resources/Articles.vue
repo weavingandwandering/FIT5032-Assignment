@@ -1,3 +1,5 @@
+<!-- //page to flood event details -->
+
 <template>
   <div class="container my-5">
       <h2 class="text-center">Populate Events</h2>

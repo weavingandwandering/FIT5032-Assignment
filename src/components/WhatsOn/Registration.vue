@@ -196,7 +196,7 @@ const register = async (event) => {
   try {
     const eventRef = doc(db, 'events', event.id);
     const attendees = event.attendees || [];
-    attendees.push({ email: userEmail.value, name: userName.value }); // Ensure userName is used correctly
+    attendees.push({ email: userEmail.value, name: userName.value });
 
     await updateDoc(eventRef, { attendees: attendees });
     alert('Registration successful!');

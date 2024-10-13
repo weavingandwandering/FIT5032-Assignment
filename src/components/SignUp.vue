@@ -120,7 +120,7 @@ const submitForm = async () => {
         email: formData.value.email,
         role: formData.value.role
       });
-
+      localStorage.setItem('currentUser', formData.value.username);
       router.push("/about"); // Navigate to another page after successful signup
     } catch (error) {
       console.error("Sign up failed:", error.message);

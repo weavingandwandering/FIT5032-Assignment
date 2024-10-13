@@ -37,6 +37,7 @@ const selectedPeriod = ref('lastWeek');
 const specificDate = ref(moment().format('YYYY-MM-DD'));
 const chartInstance = ref(null);
 
+//getting donation from db
 const fetchDonations = async () => {
   try {
     const querySnapshot = await getDocs(collection(db, 'donations'));
@@ -61,6 +62,7 @@ const fetchDonations = async () => {
   }
 };
 
+//updating trhe chart 
 const updateChart = async () => {
   const donationData = await fetchDonations();
 
@@ -102,7 +104,7 @@ const updateChart = async () => {
   if (chartInstance.value) {
     chartInstance.value.destroy(); 
   }
-
+//creating the chart
   const ctx = document.getElementById('donationChart').getContext('2d');
   chartInstance.value = new Chart(ctx, {
     type: 'bar',

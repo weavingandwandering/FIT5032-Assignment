@@ -1,3 +1,4 @@
+<!-- Scheduled reminder page -->
 <template>
   <div class="reminder container">
     <h2 class="text-center my-4">Set a Reminder</h2>
