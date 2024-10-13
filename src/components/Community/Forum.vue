@@ -21,23 +21,36 @@
 
       <div class="d-flex align-items-center">
         <label class="mr-2">Sort by:</label>
-        <select v-model="sortBy" @change="sortTable" class="form-select" aria-label="Sort posts">
+        <select v-model="sortBy" @change="sortTable(sortBy)" class="form-select" aria-label="Sort posts">
           <option value="title">Title</option>
           <option value="currentuser">Author</option>
-          <option value="rating">Rating</option>
+          <option value="averageRating">Rating</option>
           <option value="postNumber">Post No</option>
         </select>
+        <button @click="toggleSortOrder" class="btn btn-secondary ms-2">
+          {{ sortOrder === 'asc' ? 'Ascending' : 'Descending' }}
+        </button>
       </div>
     </div>
 
     <table class="table table-striped table-responsive-md">
       <thead class="thead-light">
         <tr>
-          <th scope="col" @click="sortTable('postNumber')">Post No.</th>
-          <th scope="col" @click="sortTable('title')">Title</th>
-          <th scope="col" @click="sortTable('currentuser')">Author</th>
-          <th scope="col" @click="sortTable('role')">Role</th>
-          <th scope="col" @click="sortTable('averageRating')">Rating</th>
+          <th scope="col" @click="sortTable('postNumber')">
+            Post No. <span>{{ getSortIcon('postNumber') }}</span>
+          </th>
+          <th scope="col" @click="sortTable('title')">
+            Title <span>{{ getSortIcon('title') }}</span>
+          </th>
+          <th scope="col" @click="sortTable('currentuser')">
+            Author <span>{{ getSortIcon('currentuser') }}</span>
+          </th>
+          <th scope="col" @click="sortTable('role')">
+            Role <span>{{ getSortIcon('role') }}</span>
+          </th>
+          <th scope="col" @click="sortTable('averageRating')">
+            Rating <span>{{ getSortIcon('averageRating') }}</span>
+          </th>
         </tr>
       </thead>
       <tbody>
@@ -75,14 +88,15 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { getFirestore, collection, getDocs, query, where, getDoc, doc } from 'firebase/firestore'
+import { getFirestore, collection, getDocs, doc, getDoc, query, where } from 'firebase/firestore'
 
 const posts = ref([])
 const globalSearch = ref('')
 const searchColumn = ref('all')
-const sortBy = ref('id') // Set default sorting by 'id'
+const sortBy = ref('postNumber')
+const sortOrder = ref('desc') // Track the sorting order (asc/desc)
 const currentPage = ref(1)
 const rowsPerPage = 10
 const roles = ref({})
@@ -112,6 +126,7 @@ const fetchRoles = async () => {
   const uniqueUsers = [...new Set(posts.value.map((post) => post.currentuser))]
   for (const username of uniqueUsers) {
     if (username) {
+      console.log(username)
       roles.value[username] = await getRole(username)
     }
   }
@@ -121,52 +136,51 @@ const viewPost = (postId) => {
   router.push({ name: 'ViewPost', params: { id: postId } })
 }
 
+// Toggle between ascending and descending
+const toggleSortOrder = () => {
+  sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc'
+}
+
+const sortTable = (key) => {
+  if (sortBy.value === key) {
+    toggleSortOrder() // If the same key is clicked again, toggle the order
+  } else {
+    sortBy.value = key // Change the sorting key
+    sortOrder.value = 'asc' // Reset to ascending for a new column
+  }
+}
+
 const filteredPosts = computed(() => {
   let filtered = posts.value
 
-  // Filter based on global search and selected column
   if (globalSearch.value) {
-    if (searchColumn.value === 'all') {
-      filtered = filtered.filter(
-        (post) =>
-          (post.title && post.title.toLowerCase().includes(globalSearch.value.toLowerCase())) ||
-          (post.currentuser &&
-            post.currentuser.toLowerCase().includes(globalSearch.value.toLowerCase()))
-      )
-    } else if (searchColumn.value === 'title') {
-      filtered = filtered.filter(
-        (post) => post.title && post.title.toLowerCase().includes(globalSearch.value.toLowerCase())
-      )
-    } else if (searchColumn.value === 'currentuser') {
-      filtered = filtered.filter(
-        (post) =>
-          post.currentuser &&
-          post.currentuser.toLowerCase().includes(globalSearch.value.toLowerCase())
-      )
-    }
+    filtered = filtered.filter((post) => {
+      if (searchColumn.value === 'all') {
+        return post.title?.toLowerCase().includes(globalSearch.value.toLowerCase()) || 
+               post.currentuser?.toLowerCase().includes(globalSearch.value.toLowerCase())
+      }
+      return post[searchColumn.value]?.toLowerCase().includes(globalSearch.value.toLowerCase())
+    })
   }
 
   return filtered
 })
 
-// Handle sorting separately
 const sortedPosts = computed(() => {
-  const sorted = [...filteredPosts.value] // Create a copy for sorting
-
+  const sorted = [...filteredPosts.value]
   if (sortBy.value) {
-    if (sortBy.value === 'rating') {
-      // You might want to implement a proper rating comparison
-      return sorted.sort((a, b) => {
-        const ratingA = getRating(a.id)
-        const ratingB = getRating(b.id)
-        return ratingB[0] - ratingA[0] // Sort by rating in descending order
-      })
-    } else {
-      return sorted.sort((a, b) => (b[sortBy.value] > a[sortBy.value] ? 1 : -1)); // Sort in descending order
-    }
+    return sorted.sort((a, b) => {
+      const valA = a[sortBy.value] || 0
+      const valB = b[sortBy.value] || 0
+      if (sortOrder.value === 'asc') {
+        return valA > valB ? 1 : -1
+      } else {
+        return valA < valB ? 1 : -1
+      }
+    })
   }
-  return sorted;
-});
+  return sorted
+})
 
 const paginatedPosts = computed(() => {
   const start = (currentPage.value - 1) * rowsPerPage
@@ -182,45 +196,72 @@ const nextPage = () => {
 const prevPage = () => {
   if (currentPage.value > 1) currentPage.value--
 }
+const getRating = async (postId) => {
+  try {
+    const ratingDocRef = doc(db, 'ratings', postId) 
+    const snapshot = await getDoc(ratingDocRef)
 
+    if (snapshot.exists()) {
+      const ratingData = snapshot.data()
+      console.log('Rating data:', ratingData) 
+
+      const ratingList = ratingData.rating || []
+      if (ratingList.length > 0) {
+        const sum = ratingList.reduce((a, b) => a + b, 0)
+        const average = sum / ratingList.length
+        return [average.toFixed(2), ratingList.length]
+      } else {
+        return [0, 0] 
+      }
+    } else {
+      return [0, 0] 
+    }
+  } catch (error) {
+    console.error('Error fetching ratings:', error) 
+    return [0, 0] 
+  }
+}
 const getRole = async (usernameFromLocalStorage) => {
   try {
     if (usernameFromLocalStorage) {
       const usersC = collection(db, 'users')
+      console.log(usersC)
+
       const q = query(usersC, where('username', '==', usernameFromLocalStorage))
+      console.log(q)
+
       const querySnapshot = await getDocs(q)
+      console.log(querySnapshot)
 
       if (!querySnapshot.empty) {
         const userData = querySnapshot.docs[0].data()
+        console.log(userData)
         return userData.role || 'Unknown'
+      } else {
+        console.log('No matching user found')
       }
+    } else {
+      console.log('usernameFromLocalStorage is null or undefined')
     }
     return 'Unknown'
   } catch (err) {
+    console.error(err)
     return 'Error'
   }
 }
 
-const getRating = async (postId) => {
-  const ratingRef = collection(db, 'ratings')
-  console.log(postId)
-  const snapshot = await getDoc(doc(db, 'ratings', postId));  
-  console.log(snapshot)
-  if (!snapshot.empty) {
-    const ratingList = snapshot.data().rating;
-    const sum = ratingList.reduce((a, b) => a + b, 0);
-    const average = sum / ratingList.length;
-    return [average.toFixed(2), ratingList.length];
+
+const getSortIcon = (key) => {
+  if (sortBy.value === key) {
+    return sortOrder.value === 'asc' ? '▲' : '▼'
   }
-  return [0, 0];
+  return ''
 }
 
 onMounted(() => {
-  fetchPosts()
+  fetchPosts();
 })
 </script>
-
-
 <style scoped>
 .table {
   background-color: #fff;

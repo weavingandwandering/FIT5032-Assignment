@@ -18,7 +18,7 @@
               v-model="ratingValue"
               aria-label="Rate this post"
             />
-            <span class="rating-value" role="alert">{{ ratingValue }}</span>
+            <!-- <span class="rating-value" role="alert">{{ ratingValue }}</span> -->
           </div>
 
           <div v-else class="text-danger" role="alert">
