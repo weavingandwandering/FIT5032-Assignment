@@ -10,14 +10,32 @@
           <label for="eventName" class="form-label">Event Name</label>
           <input v-model="newEvent.name" id="eventName" type="text" class="form-control" required aria-required="true" />
         </div>
+
         <div class="mb-3">
           <label for="eventDate" class="form-label">Event Date</label>
-          <input v-model="newEvent.date" id="eventDate" type="date" class="form-control" required aria-required="true" />
+          <input v-model="newEvent.eventDate" id="eventDate" type="date" class="form-control" required aria-required="true" />
         </div>
+
+        <div class="mb-3">
+          <label for="startTime" class="form-label">Start Time</label>
+          <input v-model="newEvent.startTime" id="startTime" type="time" class="form-control" required aria-required="true" />
+        </div>
+
+        <div class="mb-3">
+          <label for="endTime" class="form-label">End Time</label>
+          <input v-model="newEvent.endTime" id="endTime" type="time" class="form-control" required aria-required="true" @change="calculateDuration" />
+        </div>
+
+        <div class="mb-3">
+          <label for="eventDuration" class="form-label">Duration (hours)</label>
+          <input v-model="newEvent.duration" id="eventDuration" type="text" class="form-control" readonly />
+        </div>
+
         <div class="mb-3">
           <label for="eventDescription" class="form-label">Event Description</label>
           <textarea v-model="newEvent.description" id="eventDescription" class="form-control" required aria-required="true"></textarea>
         </div>
+
         <div class="mb-3">
           <label for="eventLocation" class="form-label">Event Location</label>
           <input v-model="newEvent.location" id="eventLocation" type="text" class="form-control" placeholder="Search for a place..." required @input="handleInput" aria-required="true" />
@@ -29,15 +47,16 @@
             </ul>
           </div>
         </div>
+
         <div class="mb-3">
           <label for="eventOrganizer" class="form-label">Organizer Name</label>
           <input id="eventOrganizer" type="text" class="form-control" :value="userName" readonly />
         </div>
+
         <button type="submit" class="btn btn-primary">Create Event</button>
       </form>
     </div>
 
-    <!-- Tabs for Event Display -->
     <ul class="nav nav-tabs mb-4">
       <li class="nav-item">
         <a class="nav-link" :class="{ active: activeTab === 'all' }" @click="activeTab = 'all'">All Events</a>
@@ -47,15 +66,16 @@
       </li>
     </ul>
 
-    <!-- Event Display Section -->
     <div class="row">
-      <div v-for="event in filteredEvents" :key="event.id" class="col-md-4 mb-3">
+      <div v-for="event in filteredEvents" :key="event.id" class="col-md-4 mb-3" @click="goToAttendance(event.id)" role="button" tabindex="0">
         <div class="card h-100" tabindex="0">
           <div class="card-body" :style="{ backgroundColor: '#e7f3fe', borderColor: '#b3d4fc' }">
             <h5 class="card-title">{{ event.name }}</h5>
             <h6 class="card-subtitle mb-2 text-muted">
-              Date: {{ event.date.toDate().toLocaleDateString() }}
+              Date: {{ event.eventDate.toDate().toLocaleDateString() }}
             </h6>
+            <p class="card-text">Time: {{ event.startTime }} - {{ event.endTime }}</p>
+            <p class="card-text">Duration: {{ event.duration }} hours</p>
             <p class="card-text">{{ event.description }}</p>
             <p class="card-text">Location: {{ event.location }}</p>
             <p class="card-text">Organizer: {{ event.organizer }}</p>
@@ -71,12 +91,14 @@ import { ref, onMounted, computed } from 'vue';
 import { getFirestore, collection, addDoc, getDocs, Timestamp } from 'firebase/firestore';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import loader from './googleMapsLoader';
+import { useRouter } from 'vue-router';
 
 const db = getFirestore();
 const auth = getAuth();
+const router = useRouter();
 
 const events = ref([]);
-const newEvent = ref({ name: '', date: '', description: '', location: '', organizer: '' });
+const newEvent = ref({ name: '', eventDate: '', startTime: '', endTime: '', duration: '', description: '', location: '', organizer: '' });
 const isVolunteer = ref(false);
 const userName = ref(''); 
 const predictions = ref([]); 
@@ -88,26 +110,38 @@ const fetchEvents = async () => {
   events.value = querySnapshot.docs.map(doc => ({
     id: doc.id,
     ...doc.data(),
-    date: doc.data().date 
+    eventDate: doc.data().eventDate 
   }));
 };
 
 const createEvent = async () => {
   try {
-    const eventDate = Timestamp.fromDate(new Date(newEvent.value.date));
+    const eventDate = Timestamp.fromDate(new Date(newEvent.value.eventDate));
     await addDoc(collection(db, 'events'), {
       name: newEvent.value.name,
-      date: eventDate,
+      eventDate: eventDate,
+      startTime: newEvent.value.startTime,
+      endTime: newEvent.value.endTime,
+      duration: newEvent.value.duration,
       description: newEvent.value.description,
       location: newEvent.value.location,
       organizer: userName.value,
       attendees: [],
     });
-    newEvent.value = { name: '', date: '', description: '', location: '', organizer: '' };
+    newEvent.value = { name: '', eventDate: '', startTime: '', endTime: '', duration: '', description: '', location: '', organizer: '' };
     predictions.value = []; 
     fetchEvents(); 
   } catch (error) {
     console.error('Error adding event:', error);
+  }
+};
+
+const calculateDuration = () => {
+  if (newEvent.value.startTime && newEvent.value.endTime) {
+    const start = new Date(`1970-01-01T${newEvent.value.startTime}:00Z`);
+    const end = new Date(`1970-01-01T${newEvent.value.endTime}:00Z`);
+    const diff = (end - start) / 1000 / 60 / 60; 
+    newEvent.value.duration = diff > 0 ? diff : 0;
   }
 };
 
@@ -154,58 +188,34 @@ const filteredEvents = computed(() => {
   }
   return events.value;
 });
+
+// Navigate to the attendance page for the selected event
+const goToAttendance = (eventId) => {
+  router.push({ name: 'ViewAttendance', params: { id: eventId } });
+};
 </script>
 
-<style scoped>
-.container {
-  max-width: 800px;
-  margin: 0 auto;
-}
-
-.card {
-  margin-top: 15px;
-  padding: 10px;
-  border: 1px solid #ddd;
-  border-radius: 5px;
-}
-
+<style>
 .suggestions {
   border: 1px solid #ddd;
-  background: white;
+  background-color: #fff;
+  max-height: 150px;
+  overflow-y: auto;
   position: absolute;
-  z-index: 1000;
-  width: calc(100% - 2rem);
 }
 
 .suggestions ul {
-  list-style-type: none;
+  list-style: none;
   padding: 0;
   margin: 0;
 }
 
 .suggestions li {
-  padding: 8px;
+  padding: 10px;
   cursor: pointer;
 }
 
-.suggestions li:hover,
-.suggestions li:focus {
+.suggestions li:hover {
   background-color: #f0f0f0;
-}
-
-/* Tab Styles */
-.nav-tabs .nav-link.active {
-  background-color: #007bff;
-  color: white;
-}
-
-.nav-tabs .nav-link {
-  color: #007bff;
-}
-
-/* Card Background Color */
-.card-body {
-  background-color: #e7f3fe;
-  border-color: #b3d4fc;
 }
 </style>

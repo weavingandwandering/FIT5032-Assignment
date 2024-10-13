@@ -19,6 +19,7 @@ import Volunteering from '../components/GetInvolved/Volunteering.vue';
 import ViewEvent from '@/components/WhatsOn/ViewEvent.vue';
 import Registration from '@/components/WhatsOn/Registration.vue';
 import Statistics from '@/components/GetInvolved/Statistics.vue';
+import ViewAttendance from '@/components/WhatsOn/ViewAttendance.vue';
 
 const routes = [
   {
@@ -116,6 +117,11 @@ const routes = [
     path: '/statistics',
     name: 'Statistics',
     component: Statistics,
+  },
+  {
+    path: '/viewattendance:id',
+    name: 'ViewAttendance',
+    component: ViewAttendance,
   },
 ];
 

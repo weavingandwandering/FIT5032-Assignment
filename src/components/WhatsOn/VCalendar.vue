@@ -54,7 +54,7 @@
         <tbody>
           <tr v-for="event in paginatedEvents" :key="event.id" @click="goToEventDetails(event.id)" class="event-item" tabindex="0" @keydown.enter="goToEventDetails(event.id)">
             <td>{{ event.name }}</td>
-            <td>{{ event.date.toDate().toLocaleDateString() }}</td>
+            <td>{{ event.eventDate.toDate().toLocaleDateString() }}</td>
             <td>{{ event.description }}</td>
           </tr>
         </tbody>
@@ -115,8 +115,8 @@ export default {
       events.value.sort((a, b) => {
         if (key === 'date') {
           return sortDirection.value === 'asc' 
-            ? a[key].toDate() - b[key].toDate() 
-            : b[key].toDate() - a[key].toDate();
+            ? a[eventDate].toDate() - b[eventDate].toDate() 
+            : b[eventDate].toDate() - a[eventDate].toDate();
         } else {
           return sortDirection.value === 'asc' 
             ? a[key].localeCompare(b[key]) 
@@ -131,7 +131,7 @@ export default {
         const eventsData = querySnapshot.docs.map((doc) => ({
           id: doc.id,
           ...doc.data(),
-          date: doc.data().date,
+          eventDate: doc.data().eventDate,
         }));
 
         events.value = eventsData;
@@ -139,7 +139,7 @@ export default {
         calendarOptions.value.events = events.value.map((event) => ({
           id: event.id,
           title: event.name,
-          start: event.date.toDate(),
+          start: event.eventDate.toDate(),
         }));
       } catch (error) {
         console.error('Error fetching events from Firestore:', error);

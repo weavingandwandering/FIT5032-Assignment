@@ -103,11 +103,9 @@ const initMap = () => {
     });
 
     const geocoder = new google.maps.Geocoder();
-    
-    // Clear existing markers
     markers.forEach(marker => marker.setMap(null)); 
     markers.length = 0; 
-    nearbyEvents.value = []; // Clear previous nearby events
+    nearbyEvents.value = []; 
 
     const distanceService = new google.maps.DistanceMatrixService();
     const geocodePromises = events.value.map(event => {
@@ -139,7 +137,6 @@ const initMap = () => {
               });
             });
 
-            // Calculate distance to user location
             distanceService.getDistanceMatrix(
               {
                 origins: [userLocation.value],
@@ -147,8 +144,9 @@ const initMap = () => {
                 travelMode: 'DRIVING',
               },
               (response, status) => {
-                if (status === 'OK') {
+                if (status === 'OK' && response.rows[0].elements[0].distance) {
                   const element = response.rows[0].elements[0];
+                  console.log(element.distance)
                   const distanceInKm = element.distance.value / 1000;
                   if (element.status === 'OK' && distanceInKm <= distance.value) {
                     nearbyEvents.value.push({
@@ -161,7 +159,6 @@ const initMap = () => {
               }
             );
           } else {
-            console.error('Geocode failed:', status);
             resolve();
           }
         });
@@ -183,8 +180,10 @@ onMounted(async () => {
 });
 
 const updateNearbyEvents = () => {
-  nearbyEvents.value = []; 
-  initMap(); 
+  if (userLocation.value && events.value.length) {
+    nearbyEvents.value = []; 
+    initMap(); 
+  }
 };
 
 watch([events, userLocation], () => {
@@ -218,7 +217,7 @@ watch([events, userLocation], () => {
 }
 
 .list-group-item:hover {
-  background-color: #e7f0ff; /* Light blue background on hover */
+  background-color: #e7f0ff; 
 }
 
 h2 {

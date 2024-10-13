@@ -56,7 +56,7 @@
               <div class="card-body">
                 <h5 class="card-title">{{ event.name }}</h5>
                 <h6 class="card-subtitle mb-2 text-muted">
-                  Date: {{ event.date.toDate().toLocaleDateString() }}
+                  Date: {{ event.eventDate.toDate().toLocaleDateString() }}
                 </h6>
                 <p class="card-text">{{ event.description }}</p>
                 <p class="card-text">Location: {{ event.location }}</p>
@@ -138,7 +138,6 @@ const calendarOptions = ref({
   headerToolbar: headerToolbar,
   editable: true,
   eventClick: (info) => {
-    console.log(info.ee)
     router.push({ name: 'ViewEvent', params: { id: info.event.id } });
   },
 });
@@ -171,7 +170,7 @@ const fetchEvents = async () => {
   events.value = querySnapshot.docs.map(doc => ({
     id: doc.id,
     ...doc.data(),
-    date: doc.data().date,
+    eventDate: doc.data().eventDate,
   }));
 
   updateCalendar();
@@ -189,6 +188,13 @@ const register = async (event) => {
 
   if (isUserRegistered(event)) {
     alert('You are already registered for this event.');
+    return;
+  }
+
+  // Check if the event has already passed
+  const currentDate = new Date();
+  if (event.eventDate.toDate() < currentDate) {
+    alert('You cannot register for an event that has already passed.');
     return;
   }
 
@@ -247,7 +253,7 @@ const filteredAndSortedEvents = computed(() => {
   });
 
   if (sortOrder.value === 'date') {
-    filteredEvents.sort((a, b) => a.date.toDate() - b.date.toDate());
+    filteredEvents.sort((a, b) => a.eventDate.toDate() - b.eventDate.toDate());
   } else if (sortOrder.value === 'name') {
     filteredEvents.sort((a, b) => a.name.localeCompare(b.name));
   }
@@ -267,7 +273,7 @@ const updateCalendar = () => {
   const calendarEvents = myRegisteredEvents.value.map(event => ({
     id: event.id,
     title: event.name,
-    start: event.date.toDate(),
+    start: event.eventDate.toDate(),
   }));
   calendarOptions.value.events = calendarEvents;
 };
@@ -281,10 +287,15 @@ onMounted(async () => {
 <style scoped>
 .event-card {
   cursor: pointer;
+  transition: transform 0.3s;
 }
-.event-card:focus,
+
 .event-card:hover {
-  background-color: #f9f9f9;
-  outline: none;
+  transform: scale(1.05);
+}
+
+.calendar-container {
+  max-width: 800px;
+  margin: 0 auto;
 }
 </style>

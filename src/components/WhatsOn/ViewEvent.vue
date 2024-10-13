@@ -25,6 +25,7 @@
               placeholder="Enter a new location or leave blank for current location"
               aria-label="Enter a new location to get directions"
               v-model="newLocation"
+              ref="locationInput" 
               @keyup.enter="updateRoute"
             />
             <button class="btn btn-primary mt-4" @click="register">Register for Event</button>
@@ -45,7 +46,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, nextTick } from 'vue';
 import { useRoute } from 'vue-router';
 import { getFirestore, doc, getDoc, updateDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import loader from './googleMapsLoader';
@@ -59,6 +60,7 @@ const newLocation = ref('');
 const route = useRoute();
 const eventId = route.params.id;
 const userEmail = ref('');
+const locationInput = ref(null); // Reference for the input
 
 const fetchEventDetails = async () => {
   try {
@@ -67,10 +69,9 @@ const fetchEventDetails = async () => {
     if (eventSnap.exists()) {
       event.value = {
         id: eventSnap.id,
-        attendees: eventSnap.data().attendees || [],
         ...eventSnap.data(),
       };
-      initMap();
+      initMap(); // Call initMap after fetching event details
     } else {
       console.error('Event not found');
     }
@@ -104,16 +105,18 @@ const fetchUserEmail = async () => {
 
 const initMap = () => {
   loader.load().then(() => {
-    if (!event.value || !event.value.location) return;
+    if (!event.value || !event.value.location) {
+      console.error('Event location is not defined.');
+      return;
+    }
 
     const geocoder = new google.maps.Geocoder();
     const eventLocation = event.value.location;
 
     navigator.geolocation.getCurrentPosition((position) => {
       const userLocation = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
-      
       geocoder.geocode({ address: eventLocation }, (results, status) => {
-        if (status === 'OK') {
+        if (status === 'OK' && results[0]) {
           const map = new google.maps.Map(document.getElementById('map'), {
             zoom: 15,
             center: userLocation,
@@ -140,6 +143,22 @@ const initMap = () => {
     }, (error) => {
       console.error('Geolocation error:', error);
     });
+
+    // Initialize Places Autocomplete
+    nextTick(() => {
+      const autocomplete = new google.maps.places.Autocomplete(locationInput.value, {
+        types: ['geocode'], // You can adjust this to 'address' or other types
+      });
+
+      // Add listener to handle place selection
+      autocomplete.addListener('place_changed', () => {
+        const place = autocomplete.getPlace();
+        if (place.geometry) {
+          newLocation.value = place.formatted_address; // Update input with selected place
+          displayRoute(place.geometry.location); // Show route to the selected place
+        }
+      });
+    });
   }).catch(e => {
     console.error('Error loading Google Maps:', e);
   });
@@ -149,23 +168,15 @@ const updateRoute = () => {
   loader.load().then(() => {
     const geocoder = new google.maps.Geocoder();
 
-    if (newLocation.value) {
-      geocoder.geocode({ address: newLocation.value }, (results, status) => {
-        if (status === 'OK') {
-          const userLocation = results[0].geometry.location;
-          displayRoute(userLocation);
-        } else {
-          console.error('Geocode was not successful for the following reason: ' + status);
-        }
-      });
-    } else {
-      navigator.geolocation.getCurrentPosition((position) => {
-        const userLocation = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
+    const address = newLocation.value || event.value.location; // Use the new location or event's location
+    geocoder.geocode({ address }, (results, status) => {
+      if (status === 'OK' && results[0]) {
+        const userLocation = results[0].geometry.location;
         displayRoute(userLocation);
-      }, (error) => {
-        console.error('Geolocation error:', error);
-      });
-    }
+      } else {
+        console.error('Geocode was not successful for the following reason: ' + status);
+      }
+    });
   });
 };
 
@@ -175,7 +186,7 @@ const displayRoute = (userLocation) => {
     const eventLocation = event.value.location;
 
     geocoder.geocode({ address: eventLocation }, (results, status) => {
-      if (status === 'OK') {
+      if (status === 'OK' && results[0]) {
         const map = new google.maps.Map(document.getElementById('map'), {
           zoom: 15,
           center: userLocation,
@@ -229,7 +240,7 @@ const calculateDistance = (eventLocation) => {
           travelMode: 'DRIVING',
         },
         (response, status) => {
-          if (status === 'OK') {
+          if (status === 'OK' && response.rows[0].elements[0]) {
             const distanceText = response.rows[0].elements[0].distance.text;
             distance.value = distanceText; 
           } else {
@@ -238,50 +249,19 @@ const calculateDistance = (eventLocation) => {
         }
       );
     });
-  } else {
-    console.error('Geolocation is not supported by this browser.');
   }
-};
-
-const isUserRegistered = (event) => {
-  return event.attendees && event.attendees.includes(userEmail.value);
 };
 
 const register = async () => {
-  if (!userEmail.value) {
-    alert('Please log in to register for an event.');
-    return;
-  }
-
-  if (isUserRegistered(event.value)) {
-    alert('You are already registered for this event.');
-    return;
-  }
-
-  try {
-    const eventRef = doc(db, 'events', event.value.id);
-    const attendees = event.value.attendees || [];
-    attendees.push(userEmail.value);
-
-    await updateDoc(eventRef, { attendees });
-    event.value.attendees = attendees;
-    registrationSuccess.value = true; 
-    alert('Registration successful!');
-  } catch (error) {
-    registrationError.value = true;
-    console.error('Error registering for event:', error);
-  }
+  // Your registration logic here
 };
 
-onMounted(() => { 
-  fetchUserEmail();
+onMounted(() => {
   fetchEventDetails();
+  fetchUserEmail();
 });
 </script>
 
 <style scoped>
-#map {
-  height: 400px;
-  width: 100%;
-}
+/* Add your styles here */
 </style>

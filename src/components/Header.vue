@@ -5,12 +5,12 @@
         <span>Golden Years Hub</span>
       </div>
 
-
       <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent" aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
       </button>
 
       <div class="collapse navbar-collapse" id="navbarContent">
+        <div class="collapse navbar-collapse" id="navbarContent">
         <ul class="navbar-nav ms-auto me-auto">
           <li class="nav-item">
             <router-link to="/about" class="nav-link" active-class="active">About Us</router-link>
@@ -44,66 +44,89 @@
             </ul>
           </li>
 
-          <!-- Get Involved Dropdown -->
           <li class="nav-item dropdown" @click="toggleDropdown('getInvolvedDropdown')">
             <a class="nav-link dropdown-toggle" role="button" aria-expanded="isOpen.getInvolvedDropdown">Get Involved</a>
             <ul v-if="isOpen.getInvolvedDropdown" class="dropdown-menu">
               <li><router-link to="/donation" class="dropdown-item">Donation</router-link></li>
               <li><router-link to="/volunteering" class="dropdown-item">Volunteering</router-link></li>
               <li><router-link to="/statistics" class="dropdown-item">View Chart</router-link></li>
-
             </ul>
-          </li>
-
-          <!-- Login / Logout Logic -->
+            </li>
+           
           <li class="nav-item" v-if="currentUser === null">
             <router-link to="/login" class="nav-link" active-class="active">Login</router-link>
           </li>
+
           <li v-else class="nav-item">
             <div class="d-flex align-items-center">
               <div>
                 <p class="text-success mb-0">Logged in as</p>
-                <h6 class="fw-bold text-dark mb-0">{{ currentUser }}</h6>
+                <h6 class="fw-bold text-dark mb-0">{{ currentUsername }}</h6>
               </div>
               <button class="btn btn-outline-success ms-3" @click="logout">Log Out</button>
             </div>
           </li>
         </ul>
       </div>
+      </div>
     </div>
   </header>
 </template>
 <script setup>
-import { ref, watch } from 'vue';
+import { ref, watch, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
+import { getFirestore, doc, getDoc } from 'firebase/firestore';
 
-const currentUser = ref(localStorage.getItem('currentUser') || null);
+const auth = getAuth();
+const db = getFirestore();
 const router = useRouter();
+
+const currentUser = ref(null);
+const currentUserEmail = ref(null);
+const currentUsername = ref(null);
+const userRole = ref(null); 
 const isOpen = ref({}); 
 
-watch(
-  () => localStorage.getItem('currentUser'),
-  (newVal) => {
-    currentUser.value = newVal;
+const fetchUserData = async (uid) => {
+  try {
+    const userDoc = await getDoc(doc(db, 'users', uid));
+    if (userDoc.exists()) {
+      const userData = userDoc.data();
+      currentUserEmail.value = userData.email;
+      currentUsername.value = userData.username;
+      userRole.value = userData.role; 
+    }
+  } catch (error) {
+    console.error('Error fetching user data:', error);
   }
-);
+};
 
+onMounted(() => {
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      currentUser.value = user.uid;
+      fetchUserData(user.uid); 
+    } else {
+      currentUser.value = null;
+      currentUserEmail.value = null;
+      userRole.value = null;
+    }
+  });
+});
 
 const toggleDropdown = (dropdown) => {
   Object.keys(isOpen.value).forEach((key) => {
-    if (key !== dropdown) isOpen.value[key] = false; 
+    if (key !== dropdown) isOpen.value[key] = false;
   });
-  isOpen.value[dropdown] = !isOpen.value[dropdown]; 
+  isOpen.value[dropdown] = !isOpen.value[dropdown];
 };
 
-// Logout function
 const logout = () => {
-  localStorage.removeItem('currentUser');
-  currentUser.value = null;
+  auth.signOut();
   router.push('/about'); 
 };
 </script>
-
 
 <style scoped>
 .navbar-logo {
